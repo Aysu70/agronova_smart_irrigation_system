@@ -1,0 +1,31 @@
+{
+  "name": "agronova-smart-irrigation-system",
+  "version": "1.0.0",
+  "description": "Smart irrigation system with AI integration and real-time monitoring",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm start --workspace=frontend",
+    "start:backend": "npm start --workspace=backend",
+    "start:frontend": "npm start --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "test": "npm test --workspaces"
+  },
+  "keywords": [
+    "irrigation",
+    "smart-agriculture",
+    "iot",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
