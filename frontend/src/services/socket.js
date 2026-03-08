@@ -1,6 +1,6 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5000";
 
 class SocketService {
   constructor() {
@@ -10,23 +10,23 @@ class SocketService {
   connect() {
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
-        transports: ['websocket'],
+        transports: ["websocket"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        reconnectionAttempts: 5
+        reconnectionAttempts: 5,
       });
 
-      this.socket.on('connect', () => {
-        console.log('✅ WebSocket connected');
+      this.socket.on("connect", () => {
+        console.log("✅ WebSocket connected");
       });
 
-      this.socket.on('disconnect', () => {
-        console.log('❌ WebSocket disconnected');
+      this.socket.on("disconnect", () => {
+        console.log("❌ WebSocket disconnected");
       });
 
-      this.socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
+      this.socket.on("connect_error", (error) => {
+        console.error("WebSocket connection error:", error);
       });
     }
     return this.socket;
@@ -58,21 +58,22 @@ class SocketService {
   }
 
   joinGroup(groupId) {
-    this.emit('join_group', groupId);
+    this.emit("join_group", groupId);
   }
 
   leaveGroup(groupId) {
-    this.emit('leave_group', groupId);
+    this.emit("leave_group", groupId);
   }
-  
+
   joinUserRoom(userId) {
-    this.emit('join', userId);
+    this.emit("join", userId);
     console.log(`Joined user room: ${userId}`);
   }
 
   sendMessage(data) {
-    this.emit('send_message', data);
+    this.emit("send_message", data);
   }
 }
 
-export default new SocketService();
+const socketService = new SocketService();
+export default socketService;
