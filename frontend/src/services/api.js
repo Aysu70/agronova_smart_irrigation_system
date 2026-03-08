@@ -67,6 +67,15 @@ if (FAST_NAV) {
         },
       });
     }
+    // Provide a mock AI response for fast navigation mode
+    if (path === "/ai/chat" || path.startsWith("/ai/chat")) {
+      const q = body?.message || (body?.data && body.data.message) || "";
+      const reply =
+        typeof mock.getMockAIResponse === "function"
+          ? mock.getMockAIResponse(q)
+          : { message: mock.mockAIResponse || "Hello!", isRestricted: false };
+      return Promise.resolve({ data: { data: reply } });
+    }
     return Promise.resolve({ data: {} });
   };
   api.put = () => Promise.resolve({ data: {} });
