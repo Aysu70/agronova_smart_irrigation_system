@@ -1,17 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Card from '../common/Card';
-import { Send, Bot } from 'lucide-react';
-import { aiAPI } from '../../services/api';
-import toast from 'react-hot-toast';
+import React, { useState, useRef, useEffect } from "react";
+import Card from "../common/Card";
+import { Send, Bot } from "lucide-react";
+import { aiAPI } from "../../services/api";
+import toast from "react-hot-toast";
 
 const AIChatBot = () => {
   const [messages, setMessages] = useState([
     {
-      role: 'assistant',
-      content: 'Hello! I\'m your AI Agriculture Assistant. 🌱 I\'m here to help with farming questions, crop advice, soil management, irrigation, pest control, and more. How can I assist you with your agricultural needs today?'
-    }
+      role: "assistant",
+      content:
+        "Hello! I'm your AI Agriculture Assistant. 🌱 I'm here to help with farming questions, crop advice, soil management, irrigation, pest control, and more. How can I assist you with your agricultural needs today?",
+    },
   ]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -20,7 +21,7 @@ const AIChatBot = () => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSubmit = async (e) => {
@@ -28,33 +29,64 @@ const AIChatBot = () => {
     if (!input.trim()) return;
 
     const userMessage = input.trim();
-    setInput('');
-    
-    // Add user message
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    
+    setInput("");
+
+    // Add user message and prepare conversation history to send
+    const newUserMsg = { role: "user", content: userMessage };
+    setMessages((prev) => [...prev, newUserMsg]);
+
     setLoading(true);
     try {
+      const conversationHistory = [...messages, newUserMsg];
       const response = await aiAPI.chat({
         message: userMessage,
-        conversationHistory: messages
+        conversationHistory,
       });
 
-      // Add AI response
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: response.data.data.message
-      }]);
+      // Safely extract AI reply (support multiple response shapes)
+      const aiData = response?.data?.data || response?.data;
+      let aiMessage = "";
+      if (!aiData) {
+        aiMessage = "Sorry, I did not receive a response.";
+      } else if (typeof aiData === "string") {
+        aiMessage = aiData;
+      } else if (aiData.message) {
+        aiMessage = aiData.message;
+      } else if (aiData.text) {
+        aiMessage = aiData.text;
+      } else if (aiData.choices && aiData.choices[0]) {
+        aiMessage =
+          aiData.choices[0].message?.content || aiData.choices[0].text || "";
+      } else {
+        // fallback to JSON stringify if structure unknown
+        aiMessage = aiData.reply || JSON.stringify(aiData);
+      }
 
-      if (response.data.data.isRestricted) {
-        toast.error('Question not related to agriculture');
+      // Add AI response
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: aiMessage,
+        },
+      ]);
+
+      if (aiData?.isRestricted) {
+        toast.error("Question not related to agriculture");
       }
     } catch (error) {
-      toast.error('Failed to get response');
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.'
-      }]);
+      const errMsg =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Failed to get response";
+      toast.error(errMsg);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ]);
     }
     setLoading(false);
   };
@@ -68,7 +100,9 @@ const AIChatBot = () => {
         </div>
         <div>
           <h3 className="text-lg font-semibold">AI Agriculture Assistant</h3>
-          <p className="text-sm text-gray-500">Ask me anything about farming!</p>
+          <p className="text-sm text-gray-500">
+            Ask me anything about farming!
+          </p>
         </div>
       </div>
 
@@ -77,37 +111,46 @@ const AIChatBot = () => {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
               className={`max-w-[80%] px-4 py-3 rounded-lg ${
-                message.role === 'user'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                message.role === "user"
+                  ? "bg-primary-600 text-white"
+                  : "bg-gray-100 text-gray-900"
               }`}
             >
               <p className="whitespace-pre-wrap">{message.content}</p>
             </div>
           </div>
         ))}
-        
+
         {loading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 px-4 py-3 rounded-lg">
               <div className="flex space-x-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                ></div>
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex space-x-2 pt-4 border-t border-gray-200">
+      <form
+        onSubmit={handleSubmit}
+        className="flex space-x-2 pt-4 border-t border-gray-200"
+      >
         <input
           type="text"
           value={input}
