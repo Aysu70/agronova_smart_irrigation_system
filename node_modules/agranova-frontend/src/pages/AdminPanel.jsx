@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../services/api';
+import { DEMO_USERS } from '../utils/demoData';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -51,20 +52,26 @@ const AdminPanel = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
-      const usersData = response.data.data;
-      setUsers(usersData);
-      setFilteredUsers(usersData);
-      
+      const usersData = response?.data?.data;
+      const finalUsers = (Array.isArray(usersData) && usersData.length > 0) ? usersData : DEMO_USERS;
+      setUsers(finalUsers);
+      setFilteredUsers(finalUsers);
+
       // Calculate stats
-      const admins = usersData.filter(u => u.role === 'admin').length;
+      const admins = finalUsers.filter(u => u.role === 'admin').length;
       setStats({
-        total: usersData.length,
+        total: finalUsers.length,
         admins: admins,
-        users: usersData.length - admins
+        users: finalUsers.length - admins
       });
     } catch (error) {
-      toast.error('Failed to load users');
-      console.error(error);
+      // Fallback to demo users
+      setUsers(DEMO_USERS);
+      setFilteredUsers(DEMO_USERS);
+      const admins = DEMO_USERS.filter(u => u.role === 'admin').length;
+      setStats({ total: DEMO_USERS.length, admins, users: DEMO_USERS.length - admins });
+      toast('Showing demo users data', { icon: '🧪' });
+      console.error('Failed to load users, using demo data', error);
     } finally {
       setLoading(false);
     }

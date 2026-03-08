@@ -37,7 +37,28 @@ export const mockSensorLatest = {
 export const mockStats = { systemsOnline: 6, alerts: 2, users: 8 };
 
 export function getMockAIResponse(question) {
-  const q = (question || "").toLowerCase();
+  const q = (question || "").toLowerCase().trim();
+
+  // Handle greetings and short affirmations with helpful follow-ups
+  const isGreeting =
+    /^(hi|hello|hey|hi there|hey there|good morning|good afternoon|good evening)$/i.test(
+      q,
+    );
+  const isAffirm = /^(yes|yep|ok|okay|sure|yup|yeah|alright)$/i.test(q);
+  if (isGreeting) {
+    return {
+      message:
+        "Hi — I'm your AI Agriculture Assistant. How can I help today? You can ask about irrigation, soil, pests, fertilizers, crop selection, or sensor configuration.",
+      isRestricted: false,
+    };
+  }
+  if (isAffirm) {
+    return {
+      message:
+        "Thanks! Could you tell me which topic you'd like more detail on — irrigation, soil health, pests, crop management, or something else?",
+      isRestricted: false,
+    };
+  }
 
   const agronomyKeywords = [
     "crop",
@@ -127,7 +148,35 @@ export function getMockAIResponse(question) {
 
 // More detailed, context-aware mock AI response generator. Prefer this when available.
 export function getMockAIResponseDetailed(question, conversationHistory = []) {
-  const q = (question || "").toLowerCase();
+  const q = (question || "").toLowerCase().trim();
+
+  // Handle user greetings / short affirmations with clarifying prompts
+  const isGreeting =
+    /^(hi|hello|hey|hi there|hey there|good morning|good afternoon|good evening)$/i.test(
+      q,
+    );
+  const isAffirm = /^(yes|yep|ok|okay|sure|yup|yeah|alright)$/i.test(q);
+  if (isGreeting) {
+    return {
+      message:
+        "Hello! I'm your AI Agriculture Assistant. What can I help you with today — irrigation, soil health, pests, crop selection, or system setup?",
+      isRestricted: false,
+    };
+  }
+  if (isAffirm) {
+    // try to reference last assistant prompt to be more helpful
+    const lastAssistant =
+      (conversationHistory || [])
+        .slice()
+        .reverse()
+        .find((m) => m.role === "assistant")?.content || "";
+    const follow =
+      lastAssistant &&
+      /\?|choose|which|do you want|would you like/i.test(lastAssistant)
+        ? `Do you want more details about: ${lastAssistant.slice(0, 120)}? Please specify which part.`
+        : "Could you specify which topic or recommendation you are confirming so I can provide detailed guidance?";
+    return { message: follow, isRestricted: false };
+  }
 
   // reuse basic keyword detection
   const agronomyKeywords = [

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
 import { adminAPI } from '../services/api';
+import { DEMO_USERS, DEMO_PAYMENTS } from '../utils/demoData';
 import { 
   CreditCard, 
   Search,
@@ -74,11 +75,44 @@ const AdminPayments = () => {
     try {
       setLoading(true);
       // Get users for simulated payments
-      const response = await adminAPI.getAllUsers();
-      const users = response.data.data || [];
-      
-      // Generate simulated payments (replace with real API later)
-      const simulatedPayments = users.flatMap((user, index) => [
+      let users = [];
+      try {
+        const response = await adminAPI.getAllUsers();
+        users = response?.data?.data || [];
+      } catch (e) {
+        users = DEMO_USERS;
+      }
+
+      // If DEMO_PAYMENTS present, prefer them
+      if (DEMO_PAYMENTS && DEMO_PAYMENTS.length > 0) {
+        const demoMapped = DEMO_PAYMENTS.map((p, idx) => ({
+          paymentId: p.id || `PAY-${2000 + idx}`,
+          transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          userId: p.userEmail,
+          userName: p.userName,
+          userEmail: p.userEmail,
+          amount: p.amount,
+          method: p.method,
+          status: p.status,
+          paymentDate: new Date(p.createdAt),
+          description: `Payment for ${p.orderId}`,
+          cardLast4: null,
+          currency: 'USD'
+        }));
+        setPayments(demoMapped);
+        setFilteredPayments(demoMapped);
+
+        const totalAmount = demoMapped.reduce((sum, p) => sum + p.amount, 0);
+        setStats({
+          total: demoMapped.length,
+          totalAmount,
+          completed: demoMapped.filter(p => p.status === 'Completed').length,
+          pending: demoMapped.filter(p => p.status === 'Pending').length,
+          failed: demoMapped.filter(p => p.status === 'Failed').length
+        });
+      } else {
+        // Generate simulated payments from users
+        const simulatedPayments = users.flatMap((user, index) => [
         {
           paymentId: `PAY-${2000 + index * 3}`,
           transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -94,19 +128,19 @@ const AdminPayments = () => {
           currency: 'USD'
         }
       ]);
+        setPayments(simulatedPayments);
+        setFilteredPayments(simulatedPayments);
 
-      setPayments(simulatedPayments);
-      setFilteredPayments(simulatedPayments);
-
-      // Calculate stats
-      const totalAmount = simulatedPayments.reduce((sum, p) => sum + p.amount, 0);
-      setStats({
-        total: simulatedPayments.length,
-        totalAmount: totalAmount,
-        completed: simulatedPayments.filter(p => p.status === 'Completed').length,
-        pending: simulatedPayments.filter(p => p.status === 'Pending').length,
-        failed: simulatedPayments.filter(p => p.status === 'Failed').length
-      });
+        // Calculate stats
+        const totalAmount = simulatedPayments.reduce((sum, p) => sum + p.amount, 0);
+        setStats({
+          total: simulatedPayments.length,
+          totalAmount: totalAmount,
+          completed: simulatedPayments.filter(p => p.status === 'Completed').length,
+          pending: simulatedPayments.filter(p => p.status === 'Pending').length,
+          failed: simulatedPayments.filter(p => p.status === 'Failed').length
+        });
+      }
 
     } catch (error) {
       toast.error('Failed to load payments');

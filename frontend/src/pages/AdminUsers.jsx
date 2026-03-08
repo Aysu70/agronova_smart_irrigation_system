@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Layout from '../components/common/Layout';
-import { adminAPI } from '../services/api';
-import { 
-  Users, 
+import React, { useState, useEffect } from "react";
+import Layout from "../components/common/Layout";
+import { adminAPI } from "../services/api";
+import {
+  Users,
   Search,
   UserCheck,
   Calendar,
@@ -14,30 +14,30 @@ import {
   UserCog,
   Shield,
   UserX,
-  Filter
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { AZERBAIJAN_REGIONS, getRegionLabel } from '../utils/constants';
-import { DEMO_USERS } from '../utils/demoData';
+  Filter,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { AZERBAIJAN_REGIONS, getRegionLabel } from "../utils/constants";
+import { DEMO_USERS, DEMO_DEVICES } from "../utils/demoData";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [regionFilter, setRegionFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [regionFilter, setRegionFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [stats, setStats] = useState({ total: 0, admins: 0, users: 0 });
 
   const updateUserStats = (usersData) => {
-    const admins = usersData.filter(u => u.role === 'admin').length;
+    const admins = usersData.filter((u) => u.role === "admin").length;
     setStats({
       total: usersData.length,
       admins,
-      users: usersData.length - admins
+      users: usersData.length - admins,
     });
   };
 
@@ -51,20 +51,21 @@ const AdminUsers = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(u => 
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (u) =>
+          u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Role filter
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(u => u.role === roleFilter);
+    if (roleFilter !== "all") {
+      filtered = filtered.filter((u) => u.role === roleFilter);
     }
 
     // Region filter
-    if (regionFilter !== 'all') {
-      filtered = filtered.filter(u => u.region === regionFilter);
+    if (regionFilter !== "all") {
+      filtered = filtered.filter((u) => u.region === regionFilter);
     }
 
     setFilteredUsers(filtered);
@@ -84,7 +85,7 @@ const AdminUsers = () => {
       setFilteredUsers(DEMO_USERS);
       updateUserStats(DEMO_USERS);
       setIsDemoMode(true);
-      toast('Showing demo users data', { icon: '🧪' });
+      toast("Showing demo users data", { icon: "🧪" });
       console.error(error);
     } finally {
       setLoading(false);
@@ -95,7 +96,9 @@ const AdminUsers = () => {
     if (!window.confirm(`Promote ${userName} to Admin?`)) return;
 
     if (isDemoMode) {
-      const updated = users.map((user) => user._id === userId ? { ...user, role: 'admin' } : user);
+      const updated = users.map((user) =>
+        user._id === userId ? { ...user, role: "admin" } : user,
+      );
       setUsers(updated);
       updateUserStats(updated);
       toast.success(`${userName} promoted to Admin (demo)`);
@@ -107,7 +110,7 @@ const AdminUsers = () => {
       toast.success(`${userName} promoted to Admin`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to promote user');
+      toast.error(error.response?.data?.message || "Failed to promote user");
     }
   };
 
@@ -115,7 +118,9 @@ const AdminUsers = () => {
     if (!window.confirm(`Demote ${userName} to regular User?`)) return;
 
     if (isDemoMode) {
-      const updated = users.map((user) => user._id === userId ? { ...user, role: 'user' } : user);
+      const updated = users.map((user) =>
+        user._id === userId ? { ...user, role: "user" } : user,
+      );
       setUsers(updated);
       updateUserStats(updated);
       toast.success(`${userName} demoted to User (demo)`);
@@ -127,12 +132,17 @@ const AdminUsers = () => {
       toast.success(`${userName} demoted to User`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to demote user');
+      toast.error(error.response?.data?.message || "Failed to demote user");
     }
   };
 
   const handleDelete = async (userId, userName) => {
-    if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${userName}? This action cannot be undone.`,
+      )
+    )
+      return;
 
     if (isDemoMode) {
       const updated = users.filter((user) => user._id !== userId);
@@ -147,15 +157,15 @@ const AdminUsers = () => {
       toast.success(`${userName} deleted successfully`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete user');
+      toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -183,7 +193,9 @@ const AdminUsers = () => {
             <Users className="w-8 h-8 mr-3 text-blue-600" />
             User Management
           </h1>
-          <p className="text-gray-600 mt-2">View and manage all registered users</p>
+          <p className="text-gray-600 mt-2">
+            View and manage all registered users
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -192,7 +204,9 @@ const AdminUsers = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats.total}
+                </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
@@ -203,8 +217,12 @@ const AdminUsers = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Administrators</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">{stats.admins}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Administrators
+                </p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">
+                  {stats.admins}
+                </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Shield className="w-6 h-6 text-purple-600" />
@@ -215,8 +233,12 @@ const AdminUsers = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Regular Users</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{stats.users}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Regular Users
+                </p>
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  {stats.users}
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <UserCheck className="w-6 h-6 text-green-600" />
@@ -261,7 +283,7 @@ const AdminUsers = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Regions</option>
-                {AZERBAIJAN_REGIONS.map(region => (
+                {AZERBAIJAN_REGIONS.map((region) => (
                   <option key={region.value} value={region.value}>
                     {region.label}
                   </option>
@@ -295,6 +317,9 @@ const AdminUsers = () => {
                       Role
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Devices
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Region
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -307,16 +332,33 @@ const AdminUsers = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.map((user) => (
-                    <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={user._id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                             {user.name?.charAt(0).toUpperCase()}
                           </div>
                           <div className="ml-4">
-                            <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {user.name}
+                            </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {(() => {
+                          if (DEMO_DEVICES && DEMO_DEVICES.length) {
+                            return DEMO_DEVICES.filter(
+                              (d) =>
+                                d.ownerId === user._id ||
+                                d.ownerEmail === user.email,
+                            ).length;
+                          }
+                          return 0;
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-600">
@@ -325,22 +367,30 @@ const AdminUsers = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                          user.role === 'admin' 
-                            ? 'bg-purple-100 text-purple-700 border border-purple-300' 
-                            : 'bg-green-100 text-green-700 border border-green-300'
-                        }`}>
-                          {user.role === 'admin' ? (
-                            <><Shield className="w-3 h-3 inline mr-1" />Administrator</>
+                        <span
+                          className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            user.role === "admin"
+                              ? "bg-purple-100 text-purple-700 border border-purple-300"
+                              : "bg-green-100 text-green-700 border border-green-300"
+                          }`}
+                        >
+                          {user.role === "admin" ? (
+                            <>
+                              <Shield className="w-3 h-3 inline mr-1" />
+                              Administrator
+                            </>
                           ) : (
-                            <><UserCheck className="w-3 h-3 inline mr-1" />User</>
+                            <>
+                              <UserCheck className="w-3 h-3 inline mr-1" />
+                              User
+                            </>
                           )}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-600">
                           <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                          {getRegionLabel(user.region) || 'N/A'}
+                          {getRegionLabel(user.region) || "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -359,7 +409,7 @@ const AdminUsers = () => {
                             <Eye className="w-4 h-4 mr-1" />
                             View
                           </button>
-                          {user.role === 'user' ? (
+                          {user.role === "user" ? (
                             <button
                               onClick={() => handlePromote(user._id, user.name)}
                               className="text-purple-600 hover:text-purple-700 font-medium flex items-center"
@@ -368,17 +418,21 @@ const AdminUsers = () => {
                               <Shield className="w-4 h-4 mr-1" />
                               Promote
                             </button>
-                          ) : user.email !== 'admin@agranova.com' && (
-                            <button
-                              onClick={() => handleDemote(user._id, user.name)}
-                              className="text-orange-600 hover:text-orange-700 font-medium flex items-center"
-                              title="Demote to User"
-                            >
-                              <UserX className="w-4 h-4 mr-1" />
-                              Demote
-                            </button>
+                          ) : (
+                            user.email !== "admin@agranova.com" && (
+                              <button
+                                onClick={() =>
+                                  handleDemote(user._id, user.name)
+                                }
+                                className="text-orange-600 hover:text-orange-700 font-medium flex items-center"
+                                title="Demote to User"
+                              >
+                                <UserX className="w-4 h-4 mr-1" />
+                                Demote
+                              </button>
+                            )
                           )}
-                          {user.email !== 'admin@agranova.com' && (
+                          {user.email !== "admin@agranova.com" && (
                             <button
                               onClick={() => handleDelete(user._id, user.name)}
                               className="text-red-600 hover:text-red-700 font-medium flex items-center"
@@ -400,7 +454,9 @@ const AdminUsers = () => {
 
         {/* Summary Footer */}
         <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-          <span>Showing {filteredUsers.length} of {users.length} users</span>
+          <span>
+            Showing {filteredUsers.length} of {users.length} users
+          </span>
           <span>Last updated: {new Date().toLocaleTimeString()}</span>
         </div>
 
@@ -410,13 +466,25 @@ const AdminUsers = () => {
             <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-gray-900">User Details</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    User Details
+                  </h3>
                   <button
                     onClick={() => setShowModal(false)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -428,12 +496,16 @@ const AdminUsers = () => {
                     {selectedUser.name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="ml-6">
-                    <h4 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h4>
-                    <span className={`mt-2 inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                      selectedUser.role === 'admin' 
-                        ? 'bg-purple-100 text-purple-700' 
-                        : 'bg-green-100 text-green-700'
-                    }`}>
+                    <h4 className="text-2xl font-bold text-gray-900">
+                      {selectedUser.name}
+                    </h4>
+                    <span
+                      className={`mt-2 inline-block px-3 py-1 text-sm font-medium rounded-full ${
+                        selectedUser.role === "admin"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
                       {selectedUser.role}
                     </span>
                   </div>
@@ -444,7 +516,9 @@ const AdminUsers = () => {
                     <Mail className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Email Address</p>
-                      <p className="text-base font-medium text-gray-900">{selectedUser.email}</p>
+                      <p className="text-base font-medium text-gray-900">
+                        {selectedUser.email}
+                      </p>
                     </div>
                   </div>
 
@@ -452,7 +526,9 @@ const AdminUsers = () => {
                     <MapPin className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Region</p>
-                      <p className="text-base font-medium text-gray-900">{getRegionLabel(selectedUser.region) || 'Not specified'}</p>
+                      <p className="text-base font-medium text-gray-900">
+                        {getRegionLabel(selectedUser.region) || "Not specified"}
+                      </p>
                     </div>
                   </div>
 
@@ -460,18 +536,32 @@ const AdminUsers = () => {
                     <Calendar className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
                     <div>
                       <p className="text-sm text-gray-500">Registration Date</p>
-                      <p className="text-base font-medium text-gray-900">{formatDate(selectedUser.createdAt)}</p>
+                      <p className="text-base font-medium text-gray-900">
+                        {formatDate(selectedUser.createdAt)}
+                      </p>
                     </div>
                   </div>
 
                   {selectedUser.crops && selectedUser.crops.length > 0 && (
                     <div className="flex items-start p-4 bg-gray-50 rounded-lg">
-                      <svg className="w-5 h-5 text-gray-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      <svg
+                        className="w-5 h-5 text-gray-400 mt-0.5 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
                       </svg>
                       <div>
                         <p className="text-sm text-gray-500">Crops</p>
-                        <p className="text-base font-medium text-gray-900">{selectedUser.crops.join(', ')}</p>
+                        <p className="text-base font-medium text-gray-900">
+                          {selectedUser.crops.join(", ")}
+                        </p>
                       </div>
                     </div>
                   )}

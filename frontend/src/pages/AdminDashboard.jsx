@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
 import { adminAPI } from '../services/api';
+import { DEMO_USERS, DEMO_DEVICES, DEMO_PAYMENTS, DEMO_ORDERS } from '../utils/demoData';
 import { 
   Users, 
   DollarSign, 
@@ -42,31 +43,38 @@ const AdminDashboard = () => {
     try {
       // Fetch all users
       const usersResponse = await adminAPI.getAllUsers();
-      const users = usersResponse.data.data || [];
-      
+      const users = (usersResponse?.data?.data && usersResponse.data.data.length > 0)
+        ? usersResponse.data.data
+        : DEMO_USERS;
+
       // Calculate stats
+      const paymentsTotal = (DEMO_PAYMENTS && DEMO_PAYMENTS.length > 0)
+        ? DEMO_PAYMENTS.reduce((s, p) => s + (p.amount || 0), 0)
+        : users.length * 150;
       setStats({
         totalUsers: users.length,
-        activeDevices: users.filter(u => u.role === 'user').length, // Simulated
-        orderedDevices: users.length * 2, // Simulated
-        totalPayments: users.length * 150 // Simulated
+        activeDevices: (DEMO_DEVICES && DEMO_DEVICES.length) || users.filter(u => u.role === 'user').length,
+        orderedDevices: users.length * 2,
+        totalPayments: paymentsTotal
       });
 
       // Set recent users (last 5)
       setRecentUsers(users.slice(0, 5));
       
       // Simulated orders and payments
-      setRecentOrders([
-        { id: 1, userId: users[0]?._id, userName: users[0]?.name, device: 'AgroSmart Pro', status: 'Delivered', date: new Date(), amount: 299 },
-        { id: 2, userId: users[1]?._id, userName: users[1]?.name, device: 'AgroSmart Basic', status: 'Processing', date: new Date(), amount: 199 },
-        { id: 3, userId: users[2]?._id, userName: users[2]?.name, device: 'AgroSmart Pro', status: 'Shipped', date: new Date(), amount: 299 },
-      ]);
-
-      setRecentPayments([
-        { id: 1, userId: users[0]?._id, userName: users[0]?.name, amount: 299, method: 'Credit Card', status: 'Completed', date: new Date() },
-        { id: 2, userId: users[1]?._id, userName: users[1]?.name, amount: 199, method: 'PayPal', status: 'Completed', date: new Date() },
-        { id: 3, userId: users[2]?._id, userName: users[2]?.name, amount: 299, method: 'Bank Transfer', status: 'Pending', date: new Date() },
-      ]);
+      // Use demo orders/payments when live data isn't available
+      setRecentOrders(DEMO_ORDERS.slice(0, 3));
+      setRecentPayments((DEMO_PAYMENTS && DEMO_PAYMENTS.length > 0 ? DEMO_PAYMENTS : DEMO_ORDERS)
+        .slice(0, 3)
+        .map((p, idx) => ({
+          id: p.id || `pay-${idx + 1}`,
+          userId: p.userEmail || p.userId,
+          userName: p.userName || p.user,
+          amount: p.amount || p.totalAmount,
+          method: p.method || p.paymentMethod || 'card',
+          status: p.status || (p.paymentStatus === 'paid' ? 'Completed' : 'Pending'),
+          date: new Date(p.createdAt || p.createdAt),
+        })));
       
       setLoading(false);
     } catch (error) {
