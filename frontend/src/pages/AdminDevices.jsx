@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import Layout from '../components/common/Layout';
-import { adminAPI } from '../services/api';
-import { AZERBAIJAN_REGIONS, getRegionCoordinates, getRegionLabel } from '../utils/constants';
-import { 
+import React, { useState, useEffect } from "react";
+import Layout from "../components/common/Layout";
+import { adminAPI } from "../services/api";
+import {
+  AZERBAIJAN_REGIONS,
+  getRegionCoordinates,
+  getRegionLabel,
+} from "../utils/constants";
+import {
   Activity,
   Search,
   MapPin,
@@ -15,50 +19,40 @@ import {
   MapIcon,
   List,
   CheckCircle,
-  XCircle
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { DEMO_USERS, buildDemoDevices } from '../utils/demoData';
+  XCircle,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import DeferredMap from "../components/common/DeferredMap";
+import { DEMO_USERS, DEMO_DEVICES, buildDemoDevices } from "../utils/demoData";
 
 // Fix default marker icon issue with webpack
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
-
-// Custom marker icons for device status
-const createDeviceIcon = (status) => {
-  const color = status === 'Active' ? 'green' : status === 'Offline' ? 'red' : 'orange';
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-};
 
 const AdminDevices = () => {
   const [devices, setDevices] = useState([]);
   const [filteredDevices, setFilteredDevices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [regionFilter, setRegionFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [regionFilter, setRegionFilter] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+  const [viewMode, setViewMode] = useState("list"); // 'list' or 'map'
   const [mapCenter, setMapCenter] = useState([40.4093, 49.8671]); // Baku center
   const [mapZoom, setMapZoom] = useState(7);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
     offline: 0,
-    maintenance: 0
+    maintenance: 0,
   });
 
   useEffect(() => {
@@ -70,19 +64,20 @@ const AdminDevices = () => {
     let filtered = devices;
 
     if (searchTerm) {
-      filtered = filtered.filter(d => 
-        d.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (d) =>
+          d.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          d.ownerName.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(d => d.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((d) => d.status === statusFilter);
     }
 
-    if (regionFilter !== 'all') {
-      filtered = filtered.filter(d => d.region === regionFilter);
+    if (regionFilter !== "all") {
+      filtered = filtered.filter((d) => d.region === regionFilter);
     }
 
     setFilteredDevices(filtered);
@@ -92,8 +87,25 @@ const AdminDevices = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
-      const users = response.data.data || [];
-      const simulatedDevices = buildDemoDevices(users, getRegionCoordinates, getRegionLabel);
+      const users = response?.data?.data || [];
+
+      // Prefer static DEMO_DEVICES if present (provides coordinates for map)
+      let simulatedDevices = [];
+      if (DEMO_DEVICES && DEMO_DEVICES.length > 0) {
+        simulatedDevices = DEMO_DEVICES;
+      } else if (users && users.length > 0) {
+        simulatedDevices = buildDemoDevices(
+          users,
+          getRegionCoordinates,
+          getRegionLabel,
+        );
+      } else {
+        simulatedDevices = buildDemoDevices(
+          DEMO_USERS,
+          getRegionCoordinates,
+          getRegionLabel,
+        );
+      }
 
       setDevices(simulatedDevices);
       setFilteredDevices(simulatedDevices);
@@ -101,22 +113,26 @@ const AdminDevices = () => {
       // Calculate stats
       setStats({
         total: simulatedDevices.length,
-        active: simulatedDevices.filter(d => d.status === 'Active').length,
-        offline: simulatedDevices.filter(d => d.status === 'Offline').length,
-        maintenance: simulatedDevices.filter(d => d.status === 'Maintenance').length
+        active: simulatedDevices.filter((d) => d.status === "Active").length,
+        offline: simulatedDevices.filter((d) => d.status === "Offline").length,
+        maintenance: simulatedDevices.filter((d) => d.status === "Maintenance")
+          .length,
       });
-
     } catch (error) {
-      const simulatedDevices = buildDemoDevices(DEMO_USERS, getRegionCoordinates, getRegionLabel);
+      const simulatedDevices =
+        DEMO_DEVICES && DEMO_DEVICES.length > 0
+          ? DEMO_DEVICES
+          : buildDemoDevices(DEMO_USERS, getRegionCoordinates, getRegionLabel);
       setDevices(simulatedDevices);
       setFilteredDevices(simulatedDevices);
       setStats({
         total: simulatedDevices.length,
-        active: simulatedDevices.filter(d => d.status === 'Active').length,
-        offline: simulatedDevices.filter(d => d.status === 'Offline').length,
-        maintenance: simulatedDevices.filter(d => d.status === 'Maintenance').length
+        active: simulatedDevices.filter((d) => d.status === "Active").length,
+        offline: simulatedDevices.filter((d) => d.status === "Offline").length,
+        maintenance: simulatedDevices.filter((d) => d.status === "Maintenance")
+          .length,
       });
-      toast('Showing demo devices data', { icon: '🧪' });
+      toast("Showing demo devices data", { icon: "🧪" });
       console.error(error);
     } finally {
       setLoading(false);
@@ -127,8 +143,8 @@ const AdminDevices = () => {
     const now = new Date();
     const diffMs = now - new Date(date);
     const diffMins = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 1) return 'Just now';
+
+    if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins} min ago`;
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -137,11 +153,11 @@ const AdminDevices = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Active':
+      case "Active":
         return <SignalHigh className="w-4 h-4" />;
-      case 'Offline':
+      case "Offline":
         return <SignalLow className="w-4 h-4" />;
-      case 'Maintenance':
+      case "Maintenance":
         return <Activity className="w-4 h-4" />;
       default:
         return <Signal className="w-4 h-4" />;
@@ -150,14 +166,14 @@ const AdminDevices = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-700 border-green-300';
-      case 'Offline':
-        return 'bg-red-100 text-red-700 border-red-300';
-      case 'Maintenance':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+      case "Active":
+        return "bg-green-100 text-green-700 border-green-300";
+      case "Offline":
+        return "bg-red-100 text-red-700 border-red-300";
+      case "Maintenance":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return "bg-gray-100 text-gray-700 border-gray-300";
     }
   };
 
@@ -167,7 +183,7 @@ const AdminDevices = () => {
   };
 
   const focusOnDeviceOnMap = (device) => {
-    setViewMode('map');
+    setViewMode("map");
     setMapCenter([device.location.lat, device.location.lng]);
     setMapZoom(12);
     setSelectedDevice(device);
@@ -192,7 +208,9 @@ const AdminDevices = () => {
             <Smartphone className="w-8 h-8 mr-3 text-blue-600" />
             Device Management
           </h1>
-          <p className="text-gray-600 mt-2">Monitor and manage all agricultural devices</p>
+          <p className="text-gray-600 mt-2">
+            Monitor and manage all agricultural devices
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -200,8 +218,12 @@ const AdminDevices = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Devices</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Devices
+                </p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {stats.total}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">Registered devices</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -214,7 +236,9 @@ const AdminDevices = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Active</p>
-                <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {stats.active}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">Online now</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -226,8 +250,12 @@ const AdminDevices = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Offline</p>
-                <p className="text-3xl font-bold text-red-600">{stats.offline}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Offline
+                </p>
+                <p className="text-3xl font-bold text-red-600">
+                  {stats.offline}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">Need attention</p>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -239,8 +267,12 @@ const AdminDevices = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Maintenance</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.maintenance}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Maintenance
+                </p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {stats.maintenance}
+                </p>
                 <p className="text-xs text-gray-500 mt-2">Under service</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -255,22 +287,22 @@ const AdminDevices = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
             <div className="flex space-x-2">
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${
-                  viewMode === 'list'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  viewMode === "list"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 <List className="w-4 h-4 mr-2" />
                 List View
               </button>
               <button
-                onClick={() => setViewMode('map')}
+                onClick={() => setViewMode("map")}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${
-                  viewMode === 'map'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  viewMode === "map"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 <MapIcon className="w-4 h-4 mr-2" />
@@ -314,8 +346,10 @@ const AdminDevices = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Regions</option>
-                {AZERBAIJAN_REGIONS.map(region => (
-                  <option key={region.value} value={region.value}>{region.label}</option>
+                {AZERBAIJAN_REGIONS.map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {region.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -323,7 +357,7 @@ const AdminDevices = () => {
         </div>
 
         {/* Content Area - List or Map */}
-        {viewMode === 'list' ? (
+        {viewMode === "list" ? (
           /* Devices List */
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {filteredDevices.length === 0 ? (
@@ -363,22 +397,33 @@ const AdminDevices = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredDevices.map((device) => (
-                      <tr key={device.deviceId} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={device.deviceId}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold mr-3">
-                              {device.deviceId.split('-')[1]}
+                              {device.deviceId.split("-")[1]}
                             </div>
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">{device.deviceName}</p>
-                              <p className="text-xs text-gray-500">{device.deviceId}</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {device.deviceName}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {device.deviceId}
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{device.ownerName}</p>
-                            <p className="text-xs text-gray-500">{device.ownerEmail}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {device.ownerName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {device.ownerEmail}
+                            </p>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -388,7 +433,9 @@ const AdminDevices = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full border flex items-center w-fit ${getStatusColor(device.status)}`}>
+                          <span
+                            className={`px-3 py-1 text-xs font-medium rounded-full border flex items-center w-fit ${getStatusColor(device.status)}`}
+                          >
                             {getStatusIcon(device.status)}
                             <span className="ml-1">{device.status}</span>
                           </span>
@@ -398,14 +445,18 @@ const AdminDevices = () => {
                             <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
                               <div
                                 className={`h-2 rounded-full ${
-                                  device.signalStrength > 70 ? 'bg-green-500' :
-                                  device.signalStrength > 40 ? 'bg-yellow-500' :
-                                  'bg-red-500'
+                                  device.signalStrength > 70
+                                    ? "bg-green-500"
+                                    : device.signalStrength > 40
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
                                 }`}
                                 style={{ width: `${device.signalStrength}%` }}
                               ></div>
                             </div>
-                            <span className="text-xs text-gray-600">{device.signalStrength}%</span>
+                            <span className="text-xs text-gray-600">
+                              {device.signalStrength}%
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -438,7 +489,10 @@ const AdminDevices = () => {
           </div>
         ) : (
           /* Map View */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style={{ height: '600px' }}>
+          <div
+            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+            style={{ height: "600px" }}
+          >
             <div className="h-full relative">
               {/* Map legend */}
               <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000]">
@@ -459,89 +513,102 @@ const AdminDevices = () => {
                 </div>
               </div>
 
-              {/* Real Azerbaijan Map */}
-              <MapContainer
-                center={[40.4093, 49.8671]}
-                zoom={7}
-                style={{ height: '100%', width: '100%' }}
-                className="z-0"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                />
-                
-                {/* Device markers */}
-                {filteredDevices.map((device) => (
-                  <Marker
-                    key={device.deviceId}
-                    position={[device.location.lat, device.location.lng]}
-                    icon={createDeviceIcon(device.status)}
-                    eventHandlers={{
-                      click: () => setSelectedDevice(device),
-                    }}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <h4 className="font-bold text-gray-900 mb-2">{device.deviceName}</h4>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">ID:</span>
-                            <span className="font-medium">{device.deviceId}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Owner:</span>
-                            <span className="font-medium">{device.ownerName}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Status:</span>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(device.status)}`}>
-                              {device.status}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => viewDeviceDetails(device)}
-                            className="w-full mt-2 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
-                          >
-                            View Details
-                          </button>
-                        </div>
+              <DeferredMap
+                items={filteredDevices}
+                getPosition={(d) => [d.location.lat, d.location.lng]}
+                center={mapCenter}
+                zoom={mapZoom}
+                onMarkerClick={(d) => setSelectedDevice(d)}
+                popupRenderer={(device) => (
+                  <div className="p-2">
+                    <h4 className="font-bold text-gray-900 mb-2">
+                      {device.deviceName}
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">ID:</span>
+                        <span className="font-medium">{device.deviceId}</span>
                       </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Owner:</span>
+                        <span className="font-medium">{device.ownerName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(device.status)}`}
+                        >
+                          {device.status}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => viewDeviceDetails(device)}
+                        className="w-full mt-2 px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                )}
+                itemKey={(d) => d.deviceId}
+                statusKey="status"
+                statusColorMap={{
+                  Active: { bg: "#10b981" },
+                  Offline: { bg: "#ef4444" },
+                  Maintenance: { bg: "#f59e0b" },
+                }}
+              />
 
               {/* Info box for selected device */}
               {selectedDevice && (
                 <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-xl p-4 max-w-sm z-[1000]">
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-bold text-gray-900">{selectedDevice.deviceName}</h4>
+                    <h4 className="font-bold text-gray-900">
+                      {selectedDevice.deviceName}
+                    </h4>
                     <button
                       onClick={() => setSelectedDevice(null)}
                       className="text-gray-400 hover:text-gray-600"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </button>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">ID:</span>
-                      <span className="font-medium">{selectedDevice.deviceId}</span>
+                      <span className="font-medium">
+                        {selectedDevice.deviceId}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Owner:</span>
-                      <span className="font-medium">{selectedDevice.ownerName}</span>
+                      <span className="font-medium">
+                        {selectedDevice.ownerName}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Location:</span>
-                      <span className="font-medium">{selectedDevice.location.address}</span>
+                      <span className="font-medium">
+                        {selectedDevice.location.address}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Status:</span>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedDevice.status)}`}>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedDevice.status)}`}
+                      >
                         {selectedDevice.status}
                       </span>
                     </div>
@@ -560,7 +627,9 @@ const AdminDevices = () => {
 
         {/* Summary Footer */}
         <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-          <span>Showing {filteredDevices.length} of {devices.length} devices</span>
+          <span>
+            Showing {filteredDevices.length} of {devices.length} devices
+          </span>
           <span>Last updated: {new Date().toLocaleTimeString()}</span>
         </div>
 
@@ -570,13 +639,25 @@ const AdminDevices = () => {
             <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-gray-900">Device Details</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Device Details
+                  </h3>
                   <button
                     onClick={() => setShowModal(false)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -586,11 +667,15 @@ const AdminDevices = () => {
                 <div className="grid grid-cols-2 gap-6 mb-6">
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Device ID</p>
-                    <p className="text-lg font-bold text-gray-900">{selectedDevice.deviceId}</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {selectedDevice.deviceId}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Status</p>
-                    <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(selectedDevice.status)}`}>
+                    <span
+                      className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(selectedDevice.status)}`}
+                    >
                       {selectedDevice.status}
                     </span>
                   </div>
@@ -598,31 +683,51 @@ const AdminDevices = () => {
 
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-2">Device Information</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Device Information
+                    </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <span className="text-gray-700 block mb-1">Name:</span>
-                        <span className="font-medium text-gray-900">{selectedDevice.deviceName}</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedDevice.deviceName}
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-700 block mb-1">Model:</span>
-                        <span className="font-medium text-gray-900">{selectedDevice.model}</span>
+                        <span className="font-medium text-gray-900">
+                          {selectedDevice.model}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-gray-700 block mb-1">Firmware:</span>
-                        <span className="font-medium text-gray-900">{selectedDevice.firmware}</span>
+                        <span className="text-gray-700 block mb-1">
+                          Firmware:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {selectedDevice.firmware}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-gray-700 block mb-1">Signal:</span>
-                        <span className="font-medium text-gray-900">{selectedDevice.signalStrength}%</span>
+                        <span className="text-gray-700 block mb-1">
+                          Signal:
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          {selectedDevice.signalStrength}%
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-2">Owner Information</p>
-                    <p className="text-base font-medium text-gray-900">{selectedDevice.ownerName}</p>
-                    <p className="text-sm text-gray-600">{selectedDevice.ownerEmail}</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Owner Information
+                    </p>
+                    <p className="text-base font-medium text-gray-900">
+                      {selectedDevice.ownerName}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedDevice.ownerEmail}
+                    </p>
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg">
@@ -630,9 +735,12 @@ const AdminDevices = () => {
                     <div className="flex items-start">
                       <MapPin className="w-5 h-5 text-gray-400 mr-2 mt-1" />
                       <div>
-                        <p className="font-medium text-gray-900">{selectedDevice.location.address}</p>
+                        <p className="font-medium text-gray-900">
+                          {selectedDevice.location.address}
+                        </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Lat: {selectedDevice.location.lat.toFixed(4)}, Lng: {selectedDevice.location.lng.toFixed(4)}
+                          Lat: {selectedDevice.location.lat.toFixed(4)}, Lng:{" "}
+                          {selectedDevice.location.lng.toFixed(4)}
                         </p>
                       </div>
                     </div>
@@ -642,38 +750,66 @@ const AdminDevices = () => {
                     <p className="text-sm text-gray-500 mb-2">Sensors</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex items-center">
-                        {selectedDevice.sensors.moisture ? 
-                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" /> :
+                        {selectedDevice.sensors.moisture ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                        ) : (
                           <XCircle className="w-4 h-4 text-gray-400 mr-2" />
-                        }
-                        <span className={selectedDevice.sensors.moisture ? 'text-gray-900' : 'text-gray-400'}>
+                        )}
+                        <span
+                          className={
+                            selectedDevice.sensors.moisture
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }
+                        >
                           Moisture Sensor
                         </span>
                       </div>
                       <div className="flex items-center">
-                        {selectedDevice.sensors.temperature ? 
-                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" /> :
+                        {selectedDevice.sensors.temperature ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                        ) : (
                           <XCircle className="w-4 h-4 text-gray-400 mr-2" />
-                        }
-                        <span className={selectedDevice.sensors.temperature ? 'text-gray-900' : 'text-gray-400'}>
+                        )}
+                        <span
+                          className={
+                            selectedDevice.sensors.temperature
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }
+                        >
                           Temperature Sensor
                         </span>
                       </div>
                       <div className="flex items-center">
-                        {selectedDevice.sensors.humidity ? 
-                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" /> :
+                        {selectedDevice.sensors.humidity ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                        ) : (
                           <XCircle className="w-4 h-4 text-gray-400 mr-2" />
-                        }
-                        <span className={selectedDevice.sensors.humidity ? 'text-gray-900' : 'text-gray-400'}>
+                        )}
+                        <span
+                          className={
+                            selectedDevice.sensors.humidity
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }
+                        >
                           Humidity Sensor
                         </span>
                       </div>
                       <div className="flex items-center">
-                        {selectedDevice.sensors.light ? 
-                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" /> :
+                        {selectedDevice.sensors.light ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 mr-2" />
+                        ) : (
                           <XCircle className="w-4 h-4 text-gray-400 mr-2" />
-                        }
-                        <span className={selectedDevice.sensors.light ? 'text-gray-900' : 'text-gray-400'}>
+                        )}
+                        <span
+                          className={
+                            selectedDevice.sensors.light
+                              ? "text-gray-900"
+                              : "text-gray-400"
+                          }
+                        >
                           Light Sensor
                         </span>
                       </div>
@@ -682,7 +818,9 @@ const AdminDevices = () => {
 
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500 mb-2">Activity</p>
-                    <p className="font-medium text-gray-900">Last Active: {formatDate(selectedDevice.lastActive)}</p>
+                    <p className="font-medium text-gray-900">
+                      Last Active: {formatDate(selectedDevice.lastActive)}
+                    </p>
                   </div>
                 </div>
               </div>

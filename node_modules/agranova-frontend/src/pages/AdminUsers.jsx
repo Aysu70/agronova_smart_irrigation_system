@@ -75,11 +75,20 @@ const AdminUsers = () => {
     try {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
-      const usersData = response.data.data || [];
+      let usersData = response?.data?.data || [];
+
+      // If the API returned no users, fall back to demo users so the UI is usable
+      if (!usersData || usersData.length === 0) {
+        usersData = DEMO_USERS;
+        setIsDemoMode(true);
+        toast("Showing demo users data", { icon: "🧪" });
+      } else {
+        setIsDemoMode(false);
+      }
+
       setUsers(usersData);
       setFilteredUsers(usersData);
       updateUserStats(usersData);
-      setIsDemoMode(false);
     } catch (error) {
       setUsers(DEMO_USERS);
       setFilteredUsers(DEMO_USERS);
@@ -348,18 +357,6 @@ const AdminUsers = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {(() => {
-                          if (DEMO_DEVICES && DEMO_DEVICES.length) {
-                            return DEMO_DEVICES.filter(
-                              (d) =>
-                                d.ownerId === user._id ||
-                                d.ownerEmail === user.email,
-                            ).length;
-                          }
-                          return 0;
-                        })()}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-600">
                           <Mail className="w-4 h-4 mr-2 text-gray-400" />
@@ -386,6 +383,18 @@ const AdminUsers = () => {
                             </>
                           )}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {(() => {
+                          if (DEMO_DEVICES && DEMO_DEVICES.length) {
+                            return DEMO_DEVICES.filter(
+                              (d) =>
+                                d.ownerId === user._id ||
+                                d.ownerEmail === user.email,
+                            ).length;
+                          }
+                          return 0;
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-600">

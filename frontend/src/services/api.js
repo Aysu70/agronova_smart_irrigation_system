@@ -1,90 +1,101 @@
 import axios from "axios";
 import mock from "./mockData";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5001/api";
+const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5000/api";
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  // default timeout (ms) to avoid long hangs when backend is unreachable
+  timeout: parseInt(process.env.REACT_APP_API_TIMEOUT || "5000", 10),
 });
 
-const FAST_NAV = process.env.REACT_APP_FAST_NAV === "true";
+let useFastNav = process.env.REACT_APP_FAST_NAV === "true";
 
-// If FAST_NAV is enabled, override api methods to return mock data quickly.
-if (FAST_NAV) {
-  const fastGet = (path) => {
-    // quick matching for common endpoints used during navigation
-    if (path.startsWith("/auth/me"))
-      return Promise.resolve({ data: mock.mockUser });
-    if (path.startsWith("/devices") || path === "/devices")
-      return Promise.resolve({ data: mock.mockDevices });
-    if (path.startsWith("/orders"))
-      return Promise.resolve({ data: mock.mockOrders });
-    if (path.startsWith("/community/groups"))
-      return Promise.resolve({ data: mock.mockGroups });
-    if (path.startsWith("/discussions") || path.startsWith("/posts"))
-      return Promise.resolve({ data: mock.mockDiscussions });
-    if (path.startsWith("/sensors/latest"))
-      return Promise.resolve({ data: mock.mockSensorLatest });
-    if (path.startsWith("/admin/systems/stats"))
-      return Promise.resolve({ data: mock.mockStats });
-    if (path.startsWith("/alerts")) return Promise.resolve({ data: [] });
-    // Fallback: return empty object quickly
-    return Promise.resolve({ data: {} });
-  };
+// fast handlers (same behavior as previous FAST_NAV override)
+const fastGet = (path) => {
+  if (path.startsWith("/auth/me"))
+    return Promise.resolve({ data: mock.mockUser });
+  if (path.startsWith("/devices") || path === "/devices")
+    return Promise.resolve({ data: mock.mockDevices });
+  if (path.startsWith("/orders"))
+    return Promise.resolve({ data: mock.mockOrders });
+  if (path.startsWith("/community/groups"))
+    return Promise.resolve({ data: mock.mockGroups });
+  if (path.startsWith("/discussions") || path.startsWith("/posts"))
+    return Promise.resolve({ data: mock.mockDiscussions });
+  if (path.startsWith("/sensors/latest"))
+    return Promise.resolve({ data: mock.mockSensorLatest });
+  if (path.startsWith("/admin/systems/stats"))
+    return Promise.resolve({ data: mock.mockStats });
+  if (path.startsWith("/alerts")) return Promise.resolve({ data: [] });
+  return Promise.resolve({ data: {} });
+};
 
-  api.get = (path) => fastGet(path);
-  api.post = (path, body) => {
-    if (path === "/auth/login" || path === "/auth/register") {
-      const email =
-        body?.email || (body?.data && body.data.email) || "demo@local";
-      // If admin credentials provided, return admin user
-      if (email === "admin@agranova.com") {
-        return Promise.resolve({
-          data: {
-            data: {
-              token: "demo-admin-token",
-              _id: "admin_001",
-              name: "Admin User",
-              email: "admin@agranova.com",
-              role: "admin",
-            },
-          },
-        });
-      }
-      // default demo user
+const fastPost = (path, body) => {
+  if (path === "/auth/login" || path === "/auth/register") {
+    const email =
+      body?.email || (body?.data && body.data.email) || "demo@local";
+    if (email === "admin@agranova.com") {
       return Promise.resolve({
         data: {
           data: {
-            token: "demo-token",
-            _id: "u1",
-            name: "Demo User",
-            email: email,
-            role: "user",
+            token: "demo-admin-token",
+            _id: "admin_001",
+            name: "Admin User",
+            email: "admin@agranova.com",
+            role: "admin",
           },
         },
       });
     }
-    // Provide a mock AI response for fast navigation mode
-    if (path === "/ai/chat" || path.startsWith("/ai/chat")) {
-      const q = body?.message || (body?.data && body.data.message) || "";
-      const conv = body?.conversationHistory || [];
-      const reply =
-        typeof mock.getMockAIResponseDetailed === "function"
-          ? mock.getMockAIResponseDetailed(q, conv)
-          : typeof mock.getMockAIResponse === "function"
-            ? mock.getMockAIResponse(q)
-            : { message: "Hello!", isRestricted: false };
-      return Promise.resolve({ data: { data: reply } });
-    }
-    return Promise.resolve({ data: {} });
-  };
-  api.put = () => Promise.resolve({ data: {} });
-  api.patch = () => Promise.resolve({ data: {} });
-  api.delete = () => Promise.resolve({ data: {} });
+    return Promise.resolve({
+      data: {
+        data: {
+          token: "demo-token",
+          _id: "u1",
+          name: "Demo User",
+          email: email,
+          role: "user",
+        },
+      },
+    });
+  }
+
+  if (path === "/ai/chat" || path.startsWith("/ai/chat")) {
+    const q = body?.message || (body?.data && body.data.message) || "";
+    const conv = body?.conversationHistory || [];
+    const reply =
+      typeof mock.getMockAIResponseDetailed === "function"
+        ? mock.getMockAIResponseDetailed(q, conv)
+        : typeof mock.getMockAIResponse === "function"
+          ? mock.getMockAIResponse(q)
+          : { message: "Hello!", isRestricted: false };
+    return Promise.resolve({ data: { data: reply } });
+  }
+  return Promise.resolve({ data: {} });
+};
+
+// Probe backend quickly; if unreachable, enable fast-nav fallback automatically
+async function probeBackend() {
+  if (useFastNav) return;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1500);
+    await fetch(API_URL + "/health", {
+      method: "GET",
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+  } catch (e) {
+    console.warn("Backend health check failed; enabling FAST_NAV fallback.", e);
+    useFastNav = true;
+  }
 }
+
+probeBackend();
 
 // Add token to requests
 api.interceptors.request.use(
@@ -104,14 +115,82 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If unauthorized, clear local session and redirect to login
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
+      return Promise.reject(error);
     }
+
+    // Network errors (no response) should be surfaced with a clear message
+    if (!error.response) {
+      // Create a friendlier error object
+      const netErr = new Error(
+        "Network Error: Unable to reach the API server.",
+      );
+      netErr.isNetworkError = true;
+      return Promise.reject(netErr);
+    }
+
     return Promise.reject(error);
   },
 );
+
+// --- Simple in-memory GET cache to speed repeated loads of heavy endpoints ---
+const _cache = new Map();
+const CACHE_TTL = parseInt(process.env.REACT_APP_API_CACHE_TTL || "60000", 10); // default 60s
+
+// wrap current api.get (works with FAST_NAV override because we bind after FAST_NAV)
+const _originalGet = api.get.bind(api);
+api.get = (path, ...rest) => {
+  if (useFastNav) return fastGet(path);
+  try {
+    const cacheable = [
+      "/devices",
+      "/sensors/latest",
+      "/admin/systems/stats",
+      "/auth/me",
+      "/orders",
+    ];
+    if (cacheable.some((p) => path.startsWith(p))) {
+      const key = path;
+      const entry = _cache.get(key);
+      if (entry && Date.now() - entry.ts < CACHE_TTL) {
+        return Promise.resolve({ data: entry.value });
+      }
+      return _originalGet(path, ...rest).then((res) => {
+        try {
+          _cache.set(key, { value: res.data, ts: Date.now() });
+        } catch (e) {}
+        return res;
+      });
+    }
+  } catch (e) {
+    // If cache wrapper fails, fall back to original
+    return _originalGet(path, ...rest);
+  }
+  return _originalGet(path, ...rest);
+};
+
+// wrap post so we can return fast responses when useFastNav is enabled
+const _originalPost = api.post.bind(api);
+api.post = (path, body, ...rest) => {
+  if (useFastNav) return fastPost(path, body);
+  return _originalPost(path, body, ...rest);
+};
+
+// clear cache when user logs out / gets 401 (already redirecting)
+const _originalResponseReject = api.interceptors.response.handlers?.find?.(
+  () => true,
+);
+// ensure cache is cleared on 401 redirect
+api.interceptors.response.use(undefined, (err) => {
+  if (err?.response?.status === 401) {
+    _cache.clear();
+  }
+  return Promise.reject(err);
+});
 
 // Auth API
 export const authAPI = {

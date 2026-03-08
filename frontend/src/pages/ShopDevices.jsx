@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import { DEMO_DEVICES, DEMO_ORDERS } from "../utils/demoData";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import {
@@ -29,18 +30,10 @@ import {
   Maximize,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import DeferredMap from "../components/common/DeferredMap";
 import Loader from "../components/common/Loader";
 
-// Fix Leaflet default icon issue
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl: require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
-});
+// Map is lazy-loaded to speed navigation
 
 const AZERBAIJAN_REGIONS = [
   "All Regions",
@@ -58,55 +51,34 @@ const AZERBAIJAN_REGIONS = [
 
 const DEVICE_TYPES = [
   "All Types",
-  "complete-system",
-  "irrigation-controller",
-  "sensor-kit",
-  "pump-system",
-];
-
-const COVERAGE_RANGES = [
-  { label: "All Coverage", value: null },
-  { label: "Small (0-1 ha)", value: { min: 0, max: 1 } },
-  { label: "Medium (1-3 ha)", value: { min: 1, max: 3 } },
-  { label: "Large (3-5 ha)", value: { min: 3, max: 5 } },
-  { label: "Extra Large (5+ ha)", value: { min: 5, max: 1000 } },
-];
-
-const INSTALLATION_LEVELS = {
-  easy: { label: "Easy", color: "text-green-600", bg: "bg-green-100" },
-  medium: { label: "Medium", color: "text-yellow-600", bg: "bg-yellow-100" },
-  advanced: { label: "Advanced", color: "text-red-600", bg: "bg-red-100" },
-};
-
-const ShopDevices = () => {
-  const { user } = useAuth();
-  const [devices, setDevices] = useState([]);
-  const [filteredDevices, setFilteredDevices] = useState([]);
-  const [popularDevices, setPopularDevices] = useState([]);
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedDevice, setSelectedDevice] = useState(null);
-  const [showOrderModal, setShowOrderModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showRecommendation, setShowRecommendation] = useState(false);
-  const [ordering, setOrdering] = useState(false);
-
-  // Filters
-  const [filters, setFilters] = useState({
-    region: "All Regions",
-    deviceType: "All Types",
-    minPrice: "",
-    maxPrice: "",
-    coverage: null,
-    inStockOnly: false,
-  });
-
-  // Recommendation form
-  const [recommendForm, setRecommendForm] = useState({
-    region: "",
-    farmSize: "",
-    budget: "",
-  });
+              <DeferredMap
+                items={filteredDevices}
+                getPosition={(d) => [d.location.lat, d.location.lng]}
+                center={[40.4093, 49.8671]}
+                zoom={7}
+                onMarkerClick={(d) => setSelectedDevice(d)}
+                popupRenderer={(device) => (
+                  <div className="p-2">
+                    <h4 className="font-bold text-gray-900 mb-2">{device.deviceName}</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Price:</span>
+                        <span className="font-medium">{device.price?.toLocaleString?.() || "N/A"} AZN</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Coverage:</span>
+                        <span className="font-medium">{device.specifications?.coverage || "N/A"}</span>
+                      </div>
+                      <div className="border-t pt-2 mt-2">
+                        <button onClick={() => viewDeviceDetails(device)} className="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors">View Details</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                itemKey={(d) => d._id || d.deviceId}
+                statusKey="status"
+                statusColorMap={{ Active: { bg: "#10b981" }, Offline: { bg: "#ef4444" }, Maintenance: { bg: "#f59e0b" } }}
+              />
   const [recommendedDevice, setRecommendedDevice] = useState(null);
 
   const [orderForm, setOrderForm] = useState({
@@ -136,11 +108,15 @@ const ShopDevices = () => {
     try {
       setLoading(true);
       const response = await api.get("/devices");
-      setDevices(response.data.data);
-      setFilteredDevices(response.data.data);
+      const devicesData = response?.data?.data || DEMO_DEVICES || [];
+      setDevices(devicesData);
+      setFilteredDevices(devicesData);
     } catch (error) {
       console.error("Error fetching devices:", error);
-      toast.error("Unable to load devices. Please try again later.");
+      // fallback to demo devices so the shop remains usable
+      setDevices(DEMO_DEVICES || []);
+      setFilteredDevices(DEMO_DEVICES || []);
+      toast.error("Unable to load devices from server — showing demo devices.");
     } finally {
       setLoading(false);
     }
@@ -149,21 +125,25 @@ const ShopDevices = () => {
   const fetchPopularDevices = async () => {
     try {
       const response = await api.get("/devices");
-      const sorted = response.data.data
+      const list = response?.data?.data || DEMO_DEVICES || [];
+      const sorted = (Array.isArray(list) ? list : [])
         .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
         .slice(0, 3);
       setPopularDevices(sorted);
     } catch (error) {
       console.error("Error fetching popular devices:", error);
+      setPopularDevices((DEMO_DEVICES || []).slice(0, 3));
     }
   };
 
   const fetchRecentOrders = async () => {
     try {
       const response = await api.get("/orders");
-      setRecentOrders(response.data.data.slice(0, 5));
+      const orders = response?.data?.data || DEMO_ORDERS || [];
+      setRecentOrders(Array.isArray(orders) ? orders.slice(0, 5) : []);
     } catch (error) {
       console.error("Error fetching recent orders:", error);
+      setRecentOrders((DEMO_ORDERS || []).slice(0, 5));
     }
   };
 
@@ -322,7 +302,7 @@ const ShopDevices = () => {
     try {
       setOrdering(true);
       await api.post("/orders", {
-        deviceId: selectedDevice._id,
+        deviceId: selectedDevice._id || selectedDevice.deviceId,
         quantity: orderForm.quantity,
         shippingAddress: orderForm.shippingAddress,
         paymentMethod: orderForm.paymentMethod,
@@ -680,7 +660,7 @@ const ShopDevices = () => {
                 <div className="space-y-4">
                   {filteredDevices.map((device) => (
                     <div
-                      key={device._id}
+                      key={device._id || device.deviceId}
                       className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                     >
                       <div className="flex">
@@ -765,7 +745,7 @@ const ShopDevices = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <span className="text-2xl font-bold text-gray-900">
-                                ${device.price.toLocaleString()}
+                                ${device?.price?.toLocaleString?.() || "N/A"}
                               </span>
                               <div className="text-sm">
                                 {device.inStock ? (
@@ -812,7 +792,7 @@ const ShopDevices = () => {
                   <div className="space-y-3">
                     {popularDevices.slice(0, 3).map((device) => (
                       <div
-                        key={device._id}
+                        key={device._id || device.deviceId}
                         className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => {
                           setSelectedDevice(device);
@@ -827,10 +807,10 @@ const ShopDevices = () => {
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-600">
-                            ★ {device.rating} ({device.reviewCount})
+                            ★ {device.rating || 0} ({device.reviewCount || 0})
                           </span>
                           <span className="font-bold text-green-600">
-                            ${device.price}
+                            ${device?.price?.toLocaleString?.() || "N/A"}
                           </span>
                         </div>
                       </div>
@@ -964,7 +944,7 @@ const ShopDevices = () => {
 
                     <div className="mb-4">
                       <span className="text-3xl font-bold text-gray-900">
-                        ${selectedDevice.price.toLocaleString()}
+                        ${selectedDevice?.price?.toLocaleString?.() || "N/A"}
                       </span>
                       <span className="text-gray-500 ml-2">
                         {selectedDevice.currency}
@@ -1305,7 +1285,7 @@ const ShopDevices = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-700">Unit Price:</span>
                     <span className="text-gray-900">
-                      ${selectedDevice.price.toLocaleString()}
+                      ${selectedDevice?.price?.toLocaleString?.() || "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between items-center mb-2">

@@ -144,7 +144,9 @@ const AdminDashboard = () => {
   };
 
   const formatCurrency = (amount) => {
-    return `$${amount.toFixed(2)}`;
+    const n = Number(amount);
+    if (!isFinite(n)) return "$0.00";
+    return `$${n.toFixed(2)}`;
   };
 
   if (loading) {

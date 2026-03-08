@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { adminAPI } from '../services/api';
-import { DEMO_USERS } from '../utils/demoData';
-import toast from 'react-hot-toast';
-import { 
-  Users, 
-  Shield, 
-  UserX, 
-  Trash2, 
-  ChevronLeft, 
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { adminAPI } from "../services/api";
+import { DEMO_USERS } from "../utils/demoData";
+import toast from "react-hot-toast";
+import {
+  Users,
+  Shield,
+  UserX,
+  Trash2,
+  ChevronLeft,
   Search,
   UserCog,
-  AlertCircle
-} from 'lucide-react';
-import Navbar from '../components/common/Navbar';
+  AlertCircle,
+} from "lucide-react";
+import Navbar from "../components/common/Navbar";
 
 const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [stats, setStats] = useState({ total: 0, admins: 0, users: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is admin
-    if (!user || user.role !== 'admin') {
-      toast.error('Access denied. Admin only.');
-      navigate('/dashboard');
+    if (!user || user.role !== "admin") {
+      toast.error("Access denied. Admin only.");
+      navigate("/dashboard");
       return;
     }
     fetchUsers();
@@ -38,9 +38,10 @@ const AdminPanel = () => {
   useEffect(() => {
     // Filter users based on search term
     if (searchTerm) {
-      const filtered = users.filter(u => 
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = users.filter(
+        (u) =>
+          u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.email.toLowerCase().includes(searchTerm.toLowerCase()),
       );
       setFilteredUsers(filtered);
     } else {
@@ -53,25 +54,32 @@ const AdminPanel = () => {
       setLoading(true);
       const response = await adminAPI.getAllUsers();
       const usersData = response?.data?.data;
-      const finalUsers = (Array.isArray(usersData) && usersData.length > 0) ? usersData : DEMO_USERS;
+      const finalUsers =
+        Array.isArray(usersData) && usersData.length > 0
+          ? usersData
+          : DEMO_USERS;
       setUsers(finalUsers);
       setFilteredUsers(finalUsers);
 
       // Calculate stats
-      const admins = finalUsers.filter(u => u.role === 'admin').length;
+      const admins = finalUsers.filter((u) => u.role === "admin").length;
       setStats({
         total: finalUsers.length,
         admins: admins,
-        users: finalUsers.length - admins
+        users: finalUsers.length - admins,
       });
     } catch (error) {
       // Fallback to demo users
       setUsers(DEMO_USERS);
       setFilteredUsers(DEMO_USERS);
-      const admins = DEMO_USERS.filter(u => u.role === 'admin').length;
-      setStats({ total: DEMO_USERS.length, admins, users: DEMO_USERS.length - admins });
-      toast('Showing demo users data', { icon: '🧪' });
-      console.error('Failed to load users, using demo data', error);
+      const admins = DEMO_USERS.filter((u) => u.role === "admin").length;
+      setStats({
+        total: DEMO_USERS.length,
+        admins,
+        users: DEMO_USERS.length - admins,
+      });
+      toast("Showing demo users data", { icon: "🧪" });
+      console.error("Failed to load users, using demo data", error);
     } finally {
       setLoading(false);
     }
@@ -85,7 +93,7 @@ const AdminPanel = () => {
       toast.success(`${userName} promoted to Admin`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to promote user');
+      toast.error(error.response?.data?.message || "Failed to promote user");
     }
   };
 
@@ -97,19 +105,24 @@ const AdminPanel = () => {
       toast.success(`${userName} demoted to User`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to demote user');
+      toast.error(error.response?.data?.message || "Failed to demote user");
     }
   };
 
   const handleDelete = async (userId, userName) => {
-    if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${userName}? This action cannot be undone.`,
+      )
+    )
+      return;
 
     try {
       await adminAPI.deleteUser(userId);
       toast.success(`${userName} deleted successfully`);
       fetchUsers();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete user');
+      toast.error(error.response?.data?.message || "Failed to delete user");
     }
   };
 
@@ -130,18 +143,18 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate("/dashboard")}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
             Back to Dashboard
           </button>
-          
+
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-gradient-to-br from-primary-500 to-primary-600 p-3 rounded-xl">
               <Shield className="w-8 h-8 text-white" />
@@ -159,7 +172,9 @@ const AdminPanel = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
               </div>
               <div className="bg-blue-100 p-3 rounded-lg">
                 <Users className="w-8 h-8 text-blue-600" />
@@ -171,7 +186,9 @@ const AdminPanel = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admins</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.admins}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.admins}
+                </p>
               </div>
               <div className="bg-purple-100 p-3 rounded-lg">
                 <Shield className="w-8 h-8 text-purple-600" />
@@ -183,7 +200,9 @@ const AdminPanel = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Regular Users</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.users}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.users}
+                </p>
               </div>
               <div className="bg-green-100 p-3 rounded-lg">
                 <UserCog className="w-8 h-8 text-green-600" />
@@ -240,7 +259,10 @@ const AdminPanel = () => {
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
-                    <tr key={u._id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={u._id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
@@ -249,7 +271,9 @@ const AdminPanel = () => {
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{u.name}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {u.name}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -257,18 +281,20 @@ const AdminPanel = () => {
                         <div className="text-sm text-gray-600">{u.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          u.role === 'admin' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {u.role === 'admin' ? (
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                            u.role === "admin"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {u.role === "admin" ? (
                             <>
                               <Shield className="w-3 h-3 mr-1" />
                               Admin
                             </>
                           ) : (
-                            'User'
+                            "User"
                           )}
                         </span>
                       </td>
@@ -277,7 +303,7 @@ const AdminPanel = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          {u.role === 'user' ? (
+                          {u.role === "user" ? (
                             <button
                               onClick={() => handlePromote(u._id, u.name)}
                               className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"

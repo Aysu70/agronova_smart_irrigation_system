@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import Layout from '../components/common/Layout';
-import { adminAPI } from '../services/api';
-import { DEMO_USERS, DEMO_PAYMENTS } from '../utils/demoData';
-import { 
-  CreditCard, 
+import React, { useState, useEffect } from "react";
+import Layout from "../components/common/Layout";
+import { adminAPI } from "../services/api";
+import { DEMO_USERS, DEMO_PAYMENTS } from "../utils/demoData";
+import {
+  CreditCard,
   Search,
   Calendar,
   User,
@@ -14,17 +14,17 @@ import {
   TrendingUp,
   CheckCircle,
   Clock,
-  XCircle
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  XCircle,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 const AdminPayments = () => {
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [stats, setStats] = useState({
@@ -32,7 +32,7 @@ const AdminPayments = () => {
     totalAmount: 0,
     completed: 0,
     pending: 0,
-    failed: 0
+    failed: 0,
   });
 
   useEffect(() => {
@@ -44,26 +44,29 @@ const AdminPayments = () => {
     let filtered = payments;
 
     if (searchTerm) {
-      filtered = filtered.filter(p => 
-        p.paymentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (p) =>
+          p.paymentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.transactionId.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(p => p.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === statusFilter);
     }
 
-    if (dateFilter !== 'all') {
+    if (dateFilter !== "all") {
       const now = new Date();
-      filtered = filtered.filter(p => {
+      filtered = filtered.filter((p) => {
         const paymentDate = new Date(p.paymentDate);
-        const diffDays = Math.floor((now - paymentDate) / (1000 * 60 * 60 * 24));
-        
-        if (dateFilter === 'today') return diffDays === 0;
-        if (dateFilter === 'week') return diffDays <= 7;
-        if (dateFilter === 'month') return diffDays <= 30;
+        const diffDays = Math.floor(
+          (now - paymentDate) / (1000 * 60 * 60 * 24),
+        );
+
+        if (dateFilter === "today") return diffDays === 0;
+        if (dateFilter === "week") return diffDays <= 7;
+        if (dateFilter === "month") return diffDays <= 30;
         return true;
       });
     }
@@ -97,7 +100,7 @@ const AdminPayments = () => {
           paymentDate: new Date(p.createdAt),
           description: `Payment for ${p.orderId}`,
           cardLast4: null,
-          currency: 'USD'
+          currency: "USD",
         }));
         setPayments(demoMapped);
         setFilteredPayments(demoMapped);
@@ -106,44 +109,50 @@ const AdminPayments = () => {
         setStats({
           total: demoMapped.length,
           totalAmount,
-          completed: demoMapped.filter(p => p.status === 'Completed').length,
-          pending: demoMapped.filter(p => p.status === 'Pending').length,
-          failed: demoMapped.filter(p => p.status === 'Failed').length
+          completed: demoMapped.filter((p) => p.status === "Completed").length,
+          pending: demoMapped.filter((p) => p.status === "Pending").length,
+          failed: demoMapped.filter((p) => p.status === "Failed").length,
         });
       } else {
         // Generate simulated payments from users
         const simulatedPayments = users.flatMap((user, index) => [
-        {
-          paymentId: `PAY-${2000 + index * 3}`,
-          transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-          userId: user._id,
-          userName: user.name,
-          userEmail: user.email,
-          amount: [199, 249, 299, 349][index % 4],
-          method: ['Credit Card', 'PayPal', 'Bank Transfer', 'Debit Card'][index % 4],
-          status: ['Completed', 'Completed', 'Pending', 'Failed'][index % 4],
-          paymentDate: new Date(Date.now() - (index * 72000000)),
-          description: `Payment for ${['AgroSmart Pro', 'AgroSmart Basic', 'AgroSmart Plus'][index % 3]}`,
-          cardLast4: index % 4 === 0 ? '4242' : null,
-          currency: 'USD'
-        }
-      ]);
+          {
+            paymentId: `PAY-${2000 + index * 3}`,
+            transactionId: `TXN-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+            userId: user._id,
+            userName: user.name,
+            userEmail: user.email,
+            amount: [199, 249, 299, 349][index % 4],
+            method: ["Credit Card", "PayPal", "Bank Transfer", "Debit Card"][
+              index % 4
+            ],
+            status: ["Completed", "Completed", "Pending", "Failed"][index % 4],
+            paymentDate: new Date(Date.now() - index * 72000000),
+            description: `Payment for ${["AgroSmart Pro", "AgroSmart Basic", "AgroSmart Plus"][index % 3]}`,
+            cardLast4: index % 4 === 0 ? "4242" : null,
+            currency: "USD",
+          },
+        ]);
         setPayments(simulatedPayments);
         setFilteredPayments(simulatedPayments);
 
         // Calculate stats
-        const totalAmount = simulatedPayments.reduce((sum, p) => sum + p.amount, 0);
+        const totalAmount = simulatedPayments.reduce(
+          (sum, p) => sum + p.amount,
+          0,
+        );
         setStats({
           total: simulatedPayments.length,
           totalAmount: totalAmount,
-          completed: simulatedPayments.filter(p => p.status === 'Completed').length,
-          pending: simulatedPayments.filter(p => p.status === 'Pending').length,
-          failed: simulatedPayments.filter(p => p.status === 'Failed').length
+          completed: simulatedPayments.filter((p) => p.status === "Completed")
+            .length,
+          pending: simulatedPayments.filter((p) => p.status === "Pending")
+            .length,
+          failed: simulatedPayments.filter((p) => p.status === "Failed").length,
         });
       }
-
     } catch (error) {
-      toast.error('Failed to load payments');
+      toast.error("Failed to load payments");
       console.error(error);
     } finally {
       setLoading(false);
@@ -151,26 +160,28 @@ const AdminPayments = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const formatCurrency = (amount) => {
-    return `$${amount.toFixed(2)}`;
+    const n = Number(amount);
+    if (!isFinite(n)) return "$0.00";
+    return `$${n.toFixed(2)}`;
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Completed':
+      case "Completed":
         return <CheckCircle className="w-4 h-4" />;
-      case 'Pending':
+      case "Pending":
         return <Clock className="w-4 h-4" />;
-      case 'Failed':
+      case "Failed":
         return <XCircle className="w-4 h-4" />;
       default:
         return null;
@@ -179,14 +190,14 @@ const AdminPayments = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed':
-        return 'bg-green-100 text-green-700 border-green-300';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'Failed':
-        return 'bg-red-100 text-red-700 border-red-300';
+      case "Completed":
+        return "bg-green-100 text-green-700 border-green-300";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+      case "Failed":
+        return "bg-red-100 text-red-700 border-red-300";
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300';
+        return "bg-gray-100 text-gray-700 border-gray-300";
     }
   };
 
@@ -214,7 +225,9 @@ const AdminPayments = () => {
             <CreditCard className="w-8 h-8 mr-3 text-purple-600" />
             Payments History
           </h1>
-          <p className="text-gray-600 mt-2">View and manage all payment transactions</p>
+          <p className="text-gray-600 mt-2">
+            View and manage all payment transactions
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -222,8 +235,12 @@ const AdminPayments = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
-                <p className="text-3xl font-bold text-purple-600">{formatCurrency(stats.totalAmount)}</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Revenue
+                </p>
+                <p className="text-3xl font-bold text-purple-600">
+                  {formatCurrency(stats.totalAmount)}
+                </p>
                 <p className="text-xs text-green-600 mt-2 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   +15% from last month
@@ -238,9 +255,15 @@ const AdminPayments = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Completed</p>
-                <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
-                <p className="text-xs text-gray-500 mt-2">Successful payments</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Completed
+                </p>
+                <p className="text-3xl font-bold text-green-600">
+                  {stats.completed}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Successful payments
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-green-600" />
@@ -251,9 +274,15 @@ const AdminPayments = () => {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Pending</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
-                <p className="text-xs text-gray-500 mt-2">Awaiting confirmation</p>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Pending
+                </p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {stats.pending}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Awaiting confirmation
+                </p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
@@ -265,8 +294,12 @@ const AdminPayments = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 mb-1">Failed</p>
-                <p className="text-3xl font-bold text-red-600">{stats.failed}</p>
-                <p className="text-xs text-gray-500 mt-2">Unsuccessful payments</p>
+                <p className="text-3xl font-bold text-red-600">
+                  {stats.failed}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Unsuccessful payments
+                </p>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                 <XCircle className="w-6 h-6 text-red-600" />
@@ -362,9 +395,14 @@ const AdminPayments = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredPayments.map((payment) => (
-                    <tr key={payment.paymentId} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={payment.paymentId}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-semibold text-gray-900">{payment.paymentId}</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {payment.paymentId}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -372,25 +410,39 @@ const AdminPayments = () => {
                             {payment.userName?.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{payment.userName}</p>
-                            <p className="text-xs text-gray-500">{payment.userEmail}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {payment.userName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {payment.userEmail}
+                            </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-700">{payment.description}</span>
+                        <span className="text-sm text-gray-700">
+                          {payment.description}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-gray-900">{formatCurrency(payment.amount)}</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {formatCurrency(payment.amount)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-700">{payment.method}</span>
+                        <span className="text-sm text-gray-700">
+                          {payment.method}
+                        </span>
                         {payment.cardLast4 && (
-                          <span className="text-xs text-gray-500 block">****{payment.cardLast4}</span>
+                          <span className="text-xs text-gray-500 block">
+                            ****{payment.cardLast4}
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full border flex items-center w-fit ${getStatusColor(payment.status)}`}>
+                        <span
+                          className={`px-3 py-1 text-xs font-medium rounded-full border flex items-center w-fit ${getStatusColor(payment.status)}`}
+                        >
                           {getStatusIcon(payment.status)}
                           <span className="ml-1">{payment.status}</span>
                         </span>
@@ -420,7 +472,9 @@ const AdminPayments = () => {
 
         {/* Summary Footer */}
         <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
-          <span>Showing {filteredPayments.length} of {payments.length} payments</span>
+          <span>
+            Showing {filteredPayments.length} of {payments.length} payments
+          </span>
           <span>Last updated: {new Date().toLocaleTimeString()}</span>
         </div>
 
@@ -430,13 +484,25 @@ const AdminPayments = () => {
             <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-gray-900">Payment Details</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Payment Details
+                  </h3>
                   <button
                     onClick={() => setShowModal(false)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -446,11 +512,15 @@ const AdminPayments = () => {
                 <div className="grid grid-cols-2 gap-6 mb-6">
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Payment ID</p>
-                    <p className="text-lg font-bold text-gray-900">{selectedPayment.paymentId}</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {selectedPayment.paymentId}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Status</p>
-                    <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(selectedPayment.status)}`}>
+                    <span
+                      className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(selectedPayment.status)}`}
+                    >
                       {selectedPayment.status}
                     </span>
                   </div>
@@ -458,48 +528,72 @@ const AdminPayments = () => {
 
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-2">Transaction Information</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Transaction Information
+                    </p>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-gray-700">Transaction ID:</span>
-                      <span className="font-medium text-gray-900 font-mono text-sm">{selectedPayment.transactionId}</span>
+                      <span className="font-medium text-gray-900 font-mono text-sm">
+                        {selectedPayment.transactionId}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-700">Currency:</span>
-                      <span className="font-medium text-gray-900">{selectedPayment.currency}</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedPayment.currency}
+                      </span>
                     </div>
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-2">Customer Information</p>
-                    <p className="text-base font-medium text-gray-900">{selectedPayment.userName}</p>
-                    <p className="text-sm text-gray-600">{selectedPayment.userEmail}</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Customer Information
+                    </p>
+                    <p className="text-base font-medium text-gray-900">
+                      {selectedPayment.userName}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedPayment.userEmail}
+                    </p>
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-500 mb-2">Payment Details</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Payment Details
+                    </p>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-gray-700">Description:</span>
-                      <span className="font-medium text-gray-900">{selectedPayment.description}</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedPayment.description}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-gray-700">Method:</span>
-                      <span className="font-medium text-gray-900">{selectedPayment.method}</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedPayment.method}
+                      </span>
                     </div>
                     {selectedPayment.cardLast4 && (
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-gray-700">Card:</span>
-                        <span className="font-medium text-gray-900 font-mono">**** **** **** {selectedPayment.cardLast4}</span>
+                        <span className="font-medium text-gray-900 font-mono">
+                          **** **** **** {selectedPayment.cardLast4}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
                       <span className="text-gray-700">Amount:</span>
-                      <span className="font-bold text-xl text-gray-900">{formatCurrency(selectedPayment.amount)}</span>
+                      <span className="font-bold text-xl text-gray-900">
+                        {formatCurrency(selectedPayment.amount)}
+                      </span>
                     </div>
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500 mb-2">Date & Time</p>
-                    <p className="font-medium text-gray-900">{formatDate(selectedPayment.paymentDate)}</p>
+                    <p className="font-medium text-gray-900">
+                      {formatDate(selectedPayment.paymentDate)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -511,9 +605,7 @@ const AdminPayments = () => {
                 >
                   Close
                 </button>
-                <button
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center"
-                >
+                <button className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center">
                   <Download className="w-4 h-4 mr-2" />
                   Export Receipt
                 </button>

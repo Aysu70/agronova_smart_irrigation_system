@@ -1,9 +1,7 @@
 const axios = require("axios");
-          {
-            role: 'system',
-            content:
-              'You are an expert agricultural advisor and agronomist. Provide practical, helpful, and detailed advice about farming, crops, soil management, irrigation, pest control, and sustainable agriculture practices. Use clear, actionable language farmers can follow. If a user message is a short greeting (e.g., "hi", "hello") or a short affirmation (e.g., "yes", "yep", "ok"), reply with a friendly greeting and follow up with a specific clarifying question to steer the conversation (for example: "Hi — how can I help today? Are you asking about irrigation, soil, pests, or crop selection?"). Avoid answering with single-word replies; when the user's intent is ambiguous, ask one or two focused clarifying questions. If asked about non-agricultural topics, politely state you only handle agriculture-related questions and suggest agriculture-related alternatives.',
-          },
+
+// Keywords used to detect agriculture-related questions
+const agronomyKeywords = [
   "soil",
   "plant",
   "agriculture",
@@ -22,8 +20,6 @@ const axios = require("axios");
   "rotation",
   "greenhouse",
   "livestock",
-  "dairy",
-  "poultry",
   "vegetable",
   "fruit",
   "grain",
@@ -53,6 +49,7 @@ const axios = require("axios");
 
 // Check if question is agriculture-related
 const isAgronomyQuestion = (question) => {
+  if (!question || typeof question !== "string") return false;
   const lowerQuestion = question.toLowerCase();
   return agronomyKeywords.some((keyword) => lowerQuestion.includes(keyword));
 };
@@ -60,7 +57,7 @@ const isAgronomyQuestion = (question) => {
 // AI Chat endpoint
 exports.chat = async (req, res) => {
   try {
-    const { message, conversationHistory = [] } = req.body;
+    const { message, conversationHistory = [] } = req.body || {};
 
     if (!message) {
       return res.status(400).json({
@@ -157,7 +154,7 @@ exports.chat = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        message: getMockAgronomyResponse(req.body.message),
+        message: getMockAgronomyResponse(req.body?.message || ""),
         isRestricted: false,
         isMock: true,
       },
@@ -167,10 +164,18 @@ exports.chat = async (req, res) => {
 
 // Mock responses for demonstration
 function getMockAgronomyResponse(question) {
-  const lowerQuestion = question.toLowerCase();
+  const lowerQuestion = (question || "").toLowerCase();
 
   if (lowerQuestion.includes("irrigation") || lowerQuestion.includes("water")) {
-    return "Great question about irrigation! For optimal irrigation:\n\n1. Monitor soil moisture regularly (aim for 60-80% for most crops)\n2. Water early morning or evening to reduce evaporation\n3. Use drip irrigation for water efficiency\n4. Adjust frequency based on weather and crop stage\n5. Ensure proper drainage to prevent waterlogging\n\nYour smart irrigation system can automate this based on soil moisture sensors. Would you like specific advice for your crop type?";
+    return (
+      "Great question about irrigation! For optimal irrigation:\n\n" +
+      "1. Monitor soil moisture regularly (aim for 60-80% for most crops)\n" +
+      "2. Water early morning or evening to reduce evaporation\n" +
+      "3. Use drip irrigation for water efficiency\n" +
+      "4. Adjust frequency based on weather and crop stage\n" +
+      "5. Ensure proper drainage to prevent waterlogging\n\n" +
+      "Your smart irrigation system can automate this based on soil moisture sensors. Would you like specific advice for your crop type?"
+    );
   }
 
   if (
@@ -178,7 +183,15 @@ function getMockAgronomyResponse(question) {
     lowerQuestion.includes("fertilizer") ||
     lowerQuestion.includes("nutrient")
   ) {
-    return "Soil health is crucial for good yields! Here are key tips:\n\n1. Test your soil pH (most crops prefer 6.0-7.0)\n2. Add organic matter like compost regularly\n3. Use balanced NPK fertilizers based on crop needs\n4. Practice crop rotation to maintain nutrients\n5. Consider cover crops to improve soil structure\n\nWould you like specific fertilizer recommendations for your crop?";
+    return (
+      "Soil health is crucial for good yields! Here are key tips:\n\n" +
+      "1. Test your soil pH (most crops prefer 6.0-7.0)\n" +
+      "2. Add organic matter like compost regularly\n" +
+      "3. Use balanced NPK fertilizers based on crop needs\n" +
+      "4. Practice crop rotation to maintain nutrients\n" +
+      "5. Consider cover crops to improve soil structure\n\n" +
+      "Would you like specific fertilizer recommendations for your crop?"
+    );
   }
 
   if (
@@ -186,7 +199,16 @@ function getMockAgronomyResponse(question) {
     lowerQuestion.includes("insect") ||
     lowerQuestion.includes("disease")
   ) {
-    return "Pest and disease management is essential! Follow these integrated pest management practices:\n\n1. Monitor regularly for early detection\n2. Use resistant crop varieties when possible\n3. Maintain proper spacing for air circulation\n4. Remove infected plants promptly\n5. Use biological controls before chemicals\n6. Apply pesticides only when necessary\n\nWhat specific pest or disease are you dealing with?";
+    return (
+      "Pest and disease management is essential! Follow these integrated pest management practices:\n\n" +
+      "1. Monitor regularly for early detection\n" +
+      "2. Use resistant crop varieties when possible\n" +
+      "3. Maintain proper spacing for air circulation\n" +
+      "4. Remove infected plants promptly\n" +
+      "5. Use biological controls before chemicals\n" +
+      "6. Apply pesticides only when necessary\n\n" +
+      "What specific pest or disease are you dealing with?"
+    );
   }
 
   if (
@@ -194,7 +216,16 @@ function getMockAgronomyResponse(question) {
     lowerQuestion.includes("plant") ||
     lowerQuestion.includes("grow")
   ) {
-    return "For successful crop cultivation:\n\n1. Choose varieties suitable for your climate\n2. Prepare soil properly before planting\n3. Follow recommended spacing and depth\n4. Provide adequate water and nutrients\n5. Monitor for pests and diseases\n6. Harvest at proper maturity\n\nWhat crop are you planning to grow? I can provide more specific guidance!";
+    return (
+      "For successful crop cultivation:\n\n" +
+      "1. Choose varieties suitable for your climate\n" +
+      "2. Prepare soil properly before planting\n" +
+      "3. Follow recommended spacing and depth\n" +
+      "4. Provide adequate water and nutrients\n" +
+      "5. Monitor for pests and diseases\n" +
+      "6. Harvest at proper maturity\n\n" +
+      "What crop are you planning to grow? I can provide more specific guidance!"
+    );
   }
 
   if (
@@ -202,9 +233,27 @@ function getMockAgronomyResponse(question) {
     lowerQuestion.includes("climate") ||
     lowerQuestion.includes("season")
   ) {
-    return "Weather and climate considerations:\n\n1. Plan planting based on frost dates\n2. Monitor weather forecasts regularly\n3. Protect crops during extreme conditions\n4. Adjust irrigation based on rainfall\n5. Consider season-appropriate varieties\n6. Use mulch to moderate temperature\n\nYour sensor system helps track temperature and humidity. What's your growing region?";
+    return (
+      "Weather and climate considerations:\n\n" +
+      "1. Plan planting based on frost dates\n" +
+      "2. Monitor weather forecasts regularly\n" +
+      "3. Protect crops during extreme conditions\n" +
+      "4. Adjust irrigation based on rainfall\n" +
+      "5. Consider season-appropriate varieties\n" +
+      "6. Use mulch to moderate temperature\n\n" +
+      "Your sensor system helps track temperature and humidity. What's your growing region?"
+    );
   }
 
   // Default response
-  return "Thank you for your agriculture question! I'm here to help with farming advice. I can assist with:\n\n• Crop selection and cultivation\n• Soil management and fertilization\n• Irrigation strategies\n• Pest and disease control\n• Weather planning\n• Sustainable farming practices\n\nCould you provide more details about your specific situation or crop type?";
+  return (
+    "Thank you for your agriculture question! I'm here to help with farming advice. I can assist with:\n\n" +
+    "• Crop selection and cultivation\n" +
+    "• Soil management and fertilization\n" +
+    "• Irrigation strategies\n" +
+    "• Pest and disease control\n" +
+    "• Weather planning\n" +
+    "• Sustainable farming practices\n\n" +
+    "Could you provide more details about your specific situation or crop type?"
+  );
 }
