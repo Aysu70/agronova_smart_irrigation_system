@@ -1,11 +1,11 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Droplets, 
-  TrendingUp, 
-  Users, 
-  MessageSquare, 
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Droplets,
+  TrendingUp,
+  Users,
+  MessageSquare,
   Bell,
   LogOut,
   Sprout,
@@ -17,9 +17,10 @@ import {
   X,
   ShoppingCart,
   CreditCard,
-  Activity
-} from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+  Activity,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { prefetch } from "../../utils/prefetch";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { logout, user } = useAuth();
@@ -27,30 +28,30 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   // User menu items
   const userMenuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Irrigation', icon: Droplets, path: '/irrigation' },
-    { name: 'Analytics', icon: TrendingUp, path: '/analytics' },
-    { name: 'Shop Devices', icon: ShoppingCart, path: '/shop' },
-    { name: 'Community', icon: Users, path: '/community' },
-    { name: 'AI Assistant', icon: MessageSquare, path: '/ai-assistant' },
-    { name: 'Alerts', icon: Bell, path: '/alerts' },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+    { name: "Irrigation", icon: Droplets, path: "/irrigation" },
+    { name: "Analytics", icon: TrendingUp, path: "/analytics" },
+    { name: "Shop Devices", icon: ShoppingCart, path: "/shop" },
+    { name: "Community", icon: Users, path: "/community" },
+    { name: "AI Assistant", icon: MessageSquare, path: "/ai-assistant" },
+    { name: "Alerts", icon: Bell, path: "/alerts" },
   ];
 
   // Admin menu items
   const adminMenuItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
-    { name: 'Users', icon: Users, path: '/admin/users' },
-    { name: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
-    { name: 'Payments', icon: CreditCard, path: '/admin/payments' },
-    { name: 'Devices', icon: Monitor, path: '/admin/devices' },
-    { name: 'System Monitor', icon: Activity, path: '/admin/monitor' },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+    { name: "Users", icon: Users, path: "/admin/users" },
+    { name: "Orders", icon: ShoppingCart, path: "/admin/orders" },
+    { name: "Payments", icon: CreditCard, path: "/admin/payments" },
+    { name: "Devices", icon: Monitor, path: "/admin/devices" },
+    { name: "System Monitor", icon: Activity, path: "/admin/monitor" },
   ];
 
-  const menuItems = user?.role === 'admin' ? adminMenuItems : userMenuItems;
+  const menuItems = user?.role === "admin" ? adminMenuItems : userMenuItems;
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const handleNavClick = () => {
@@ -64,18 +65,20 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         h-screen w-64 bg-white border-r border-gray-200 fixed left-0 top-0 flex flex-col z-50
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         {/* Logo & Close Button */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -86,7 +89,9 @@ const Sidebar = ({ isOpen, onClose }) => {
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AGRANOVA</h1>
                 <p className="text-xs text-gray-500">
-                  {user?.role === 'admin' ? 'Admin Control' : 'Smart Agriculture'}
+                  {user?.role === "admin"
+                    ? "Admin Control"
+                    : "Smart Agriculture"}
                 </p>
               </div>
             </div>
@@ -108,9 +113,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                 {user.name?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {user.name}
+                </p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                {user.role === 'admin' && (
+                {user.role === "admin" && (
                   <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
                     Administrator
                   </span>
@@ -127,17 +134,21 @@ const Sidebar = ({ isOpen, onClose }) => {
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
+              onMouseEnter={() => prefetch(item.path)}
+              onFocus={() => prefetch(item.path)}
               className={({ isActive }) =>
                 `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
                   isActive
-                    ? 'bg-green-50 text-green-700 font-medium shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? "bg-green-50 text-green-700 font-medium shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={`w-5 h-5 ${isActive ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <item.icon
+                    className={`w-5 h-5 ${isActive ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`}
+                  />
                   <span>{item.name}</span>
                 </>
               )}

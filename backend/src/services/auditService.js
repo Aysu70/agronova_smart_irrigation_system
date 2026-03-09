@@ -1,5 +1,5 @@
-const AuditLog = require('../models/AuditLog');
-const BehaviorLog = require('../models/BehaviorLog');
+const AuditLog = require("../models/AuditLog");
+const BehaviorLog = require("../models/BehaviorLog");
 
 /**
  * Service for logging all database changes and user behaviors
@@ -20,9 +20,9 @@ class AuditService {
     ipAddress = null,
     userAgent = null,
     reason = null,
-    status = 'SUCCESS',
+    status = "SUCCESS",
     errorMessage = null,
-    metadata = {}
+    metadata = {},
   }) {
     try {
       const auditLog = new AuditLog({
@@ -39,13 +39,13 @@ class AuditService {
         reason,
         status,
         errorMessage,
-        metadata
+        metadata,
       });
 
       await auditLog.save();
       return auditLog;
     } catch (error) {
-      console.error('Error logging change to AuditLog:', error);
+      console.error("Error logging change to AuditLog:", error);
       // Don't throw - logging should never break the main operation
     }
   }
@@ -60,16 +60,16 @@ class AuditService {
     userRole = null,
     relatedEntityType = null,
     relatedEntityId = null,
-    description = '',
-    result = 'SUCCESS',
+    description = "",
+    result = "SUCCESS",
     data = {},
     ipAddress = null,
     userAgent = null,
     endpoint = null,
-    method = 'POST',
+    method = "POST",
     executionTimeMs = 0,
     errorDetails = null,
-    severity = 'MEDIUM'
+    severity = "MEDIUM",
   }) {
     try {
       const behaviorLog = new BehaviorLog({
@@ -88,13 +88,13 @@ class AuditService {
         method,
         executionTimeMs,
         errorDetails,
-        severity
+        severity,
       });
 
       await behaviorLog.save();
       return behaviorLog;
     } catch (error) {
-      console.error('Error logging behavior to BehaviorLog:', error);
+      console.error("Error logging behavior to BehaviorLog:", error);
       // Don't throw - logging should never break the main operation
     }
   }
@@ -125,28 +125,27 @@ class AuditService {
   static async getUserBehaviors(userId, category = null, limit = 100) {
     const query = { userId };
     if (category) query.category = category;
-    
-    return BehaviorLog.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
+
+    return BehaviorLog.find(query).sort({ createdAt: -1 }).limit(limit).lean();
   }
 
   /**
    * Get all changes for a time period
    */
-  static async getChangesByDateRange(startDate, endDate, collectionName = null) {
+  static async getChangesByDateRange(
+    startDate,
+    endDate,
+    collectionName = null,
+  ) {
     const query = {
-      createdAt: { $gte: startDate, $lte: endDate }
+      createdAt: { $gte: startDate, $lte: endDate },
     };
-    
+
     if (collectionName) {
       query.collectionName = collectionName;
     }
 
-    return AuditLog.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
+    return AuditLog.find(query).sort({ createdAt: -1 }).lean();
   }
 
   /**
@@ -154,16 +153,14 @@ class AuditService {
    */
   static async getBehaviorsByDateRange(startDate, endDate, category = null) {
     const query = {
-      createdAt: { $gte: startDate, $lte: endDate }
+      createdAt: { $gte: startDate, $lte: endDate },
     };
-    
+
     if (category) {
       query.category = category;
     }
 
-    return BehaviorLog.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
+    return BehaviorLog.find(query).sort({ createdAt: -1 }).lean();
   }
 
   /**
@@ -178,25 +175,25 @@ class AuditService {
       changesByAction,
       changesByCollection,
       changesByUser,
-      failedChanges
+      failedChanges,
     ] = await Promise.all([
       AuditLog.countDocuments({ createdAt: { $gte: startDate } }),
       AuditLog.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: '$action', count: { $sum: 1 } } }
+        { $group: { _id: "$action", count: { $sum: 1 } } },
       ]),
       AuditLog.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: '$collectionName', count: { $sum: 1 } } }
+        { $group: { _id: "$collectionName", count: { $sum: 1 } } },
       ]),
       AuditLog.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: '$userId', count: { $sum: 1 } } }
+        { $group: { _id: "$userId", count: { $sum: 1 } } },
       ]),
-      AuditLog.countDocuments({ 
-        status: 'FAILED',
-        createdAt: { $gte: startDate }
-      })
+      AuditLog.countDocuments({
+        status: "FAILED",
+        createdAt: { $gte: startDate },
+      }),
     ]);
 
     return {
@@ -205,7 +202,7 @@ class AuditService {
       changesByAction,
       changesByCollection,
       topUsers: changesByUser.slice(0, 10),
-      failedChanges
+      failedChanges,
     };
   }
 
@@ -221,25 +218,25 @@ class AuditService {
       behaviorsByCategory,
       behaviorsByAction,
       failedBehaviors,
-      criticalEvents
+      criticalEvents,
     ] = await Promise.all([
       BehaviorLog.countDocuments({ createdAt: { $gte: startDate } }),
       BehaviorLog.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: '$category', count: { $sum: 1 } } }
+        { $group: { _id: "$category", count: { $sum: 1 } } },
       ]),
       BehaviorLog.aggregate([
         { $match: { createdAt: { $gte: startDate } } },
-        { $group: { _id: '$action', count: { $sum: 1 } } }
+        { $group: { _id: "$action", count: { $sum: 1 } } },
       ]),
       BehaviorLog.countDocuments({
-        result: { $in: ['FAILED', 'CANCELLED'] },
-        createdAt: { $gte: startDate }
+        result: { $in: ["FAILED", "CANCELLED"] },
+        createdAt: { $gte: startDate },
       }),
       BehaviorLog.countDocuments({
-        severity: 'CRITICAL',
-        createdAt: { $gte: startDate }
-      })
+        severity: "CRITICAL",
+        createdAt: { $gte: startDate },
+      }),
     ]);
 
     return {
@@ -248,7 +245,7 @@ class AuditService {
       behaviorsByCategory,
       behaviorsByAction,
       failedBehaviors,
-      criticalEvents
+      criticalEvents,
     };
   }
 
@@ -256,15 +253,19 @@ class AuditService {
    * Restore previous version of a document (soft restore, doesn't actually modify data)
    * Returns the previous state for review
    */
-  static async getDocumentVersion(collectionName, documentId, versionIndex = 0) {
+  static async getDocumentVersion(
+    collectionName,
+    documentId,
+    versionIndex = 0,
+  ) {
     const changes = await AuditLog.find({
       collectionName,
       documentId,
-      action: { $in: ['UPDATE', 'CREATE'] }
+      action: { $in: ["UPDATE", "CREATE"] },
     })
-    .sort({ createdAt: -1 })
-    .limit(versionIndex + 1)
-    .lean();
+      .sort({ createdAt: -1 })
+      .limit(versionIndex + 1)
+      .lean();
 
     if (changes.length > versionIndex) {
       return changes[versionIndex];
@@ -276,7 +277,7 @@ class AuditService {
    * Get all changes that failed
    */
   static async getFailedChanges(limit = 50) {
-    return AuditLog.find({ status: 'FAILED' })
+    return AuditLog.find({ status: "FAILED" })
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
@@ -293,15 +294,15 @@ class AuditService {
     startDate = null,
     endDate = null,
     limit = 50,
-    skip = 0
+    skip = 0,
   }) {
     const query = {};
-    
+
     if (action) query.action = action;
     if (collectionName) query.collectionName = collectionName;
     if (userId) query.userId = userId;
     if (status) query.status = status;
-    
+
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = startDate;
@@ -327,16 +328,16 @@ class AuditService {
     startDate = null,
     endDate = null,
     limit = 50,
-    skip = 0
+    skip = 0,
   }) {
     const query = {};
-    
+
     if (action) query.action = action;
     if (category) query.category = category;
     if (userId) query.userId = userId;
     if (result) query.result = result;
     if (severity) query.severity = severity;
-    
+
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = startDate;

@@ -34,6 +34,7 @@ import DeferredMap from "../components/common/DeferredMap";
 import Loader from "../components/common/Loader";
 
 // Map is lazy-loaded to speed navigation
+// Cleaned: rewrite to remove potential hidden/invalid tokens
 
 const AZERBAIJAN_REGIONS = [
   "All Regions",
@@ -51,35 +52,46 @@ const AZERBAIJAN_REGIONS = [
 
 const DEVICE_TYPES = [
   "All Types",
-              <DeferredMap
-                items={filteredDevices}
-                getPosition={(d) => [d.location.lat, d.location.lng]}
-                center={[40.4093, 49.8671]}
-                zoom={7}
-                onMarkerClick={(d) => setSelectedDevice(d)}
-                popupRenderer={(device) => (
-                  <div className="p-2">
-                    <h4 className="font-bold text-gray-900 mb-2">{device.deviceName}</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Price:</span>
-                        <span className="font-medium">{device.price?.toLocaleString?.() || "N/A"} AZN</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Coverage:</span>
-                        <span className="font-medium">{device.specifications?.coverage || "N/A"}</span>
-                      </div>
-                      <div className="border-t pt-2 mt-2">
-                        <button onClick={() => viewDeviceDetails(device)} className="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors">View Details</button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                itemKey={(d) => d._id || d.deviceId}
-                statusKey="status"
-                statusColorMap={{ Active: { bg: "#10b981" }, Offline: { bg: "#ef4444" }, Maintenance: { bg: "#f59e0b" } }}
-              />
+  "complete-system",
+  "irrigation-controller",
+  "sensor-kit",
+  "pump-system",
+];
+
+const COVERAGE_RANGES = [
+  { label: "All Coverage", value: null },
+  { label: "Small (0-1 ha)", value: { min: 0, max: 1 } },
+  { label: "Medium (1-3 ha)", value: { min: 1, max: 3 } },
+  { label: "Large (3-5 ha)", value: { min: 3, max: 5 } },
+  { label: "Extra Large (5+ ha)", value: { min: 5, max: 1000 } },
+];
+
+const ShopDevices = () => {
+  const { user } = useAuth();
+
+  const [devices, setDevices] = useState([]);
+  const [filteredDevices, setFilteredDevices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    deviceType: "All Types",
+    minPrice: "",
+    maxPrice: "",
+    coverage: null,
+    inStockOnly: false,
+  });
+  const [popularDevices, setPopularDevices] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [recommendForm, setRecommendForm] = useState({
+    region: "",
+    farmSize: "",
+    budget: "",
+  });
   const [recommendedDevice, setRecommendedDevice] = useState(null);
+  const [ordering, setOrdering] = useState(false);
 
   const [orderForm, setOrderForm] = useState({
     quantity: 1,

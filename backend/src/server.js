@@ -41,7 +41,10 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Allow all localhost origins in development
-      if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      if (
+        origin &&
+        (origin.includes("localhost") || origin.includes("127.0.0.1"))
+      ) {
         return callback(null, true);
       }
 
@@ -55,6 +58,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
@@ -128,28 +132,64 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT, 10) || 5000;
 const HOST = process.env.HOST || "127.0.0.1";
 
-server.listen(PORT, HOST, () => {
-  console.log(`
-╔═══════════════════════════════════════════════════╗
-║                                                   ║
-║          🌱 AGRANOVA API SERVER 🌱               ║
-║                                                   ║
-║  Status: RUNNING                                  ║
-║  Host: ${HOST}                                     ║
-║  Port: ${PORT}                                     ║
-║  Environment: ${process.env.NODE_ENV || "development"}                        ║
-║  Database: Connected                              ║
-║  WebSocket: Active                                ║
-║                                                   ║
-╚═══════════════════════════════════════════════════╝
-  `);
+// Attempt to listen, retrying on EADDRINUSE by incrementing port
+function attemptListen(port, attemptsLeft = 5) {
+  const onError = (err) => {
+    if (err && err.code === "EADDRINUSE") {
+      console.warn(`Port ${port} is already in use.`);
+      if (attemptsLeft > 0) {
+        const nextPort = port + 1;
+        console.warn(
+          `Trying next port ${nextPort} (${attemptsLeft - 1} attempts left)...`,
+        );
+        // Remove this listener before retrying
+        server.removeListener("error", onError);
+        // Give the OS a moment and retry
+        setTimeout(() => attemptListen(nextPort, attemptsLeft - 1), 250);
+        return;
+      }
 
-  // Start sensor data simulation
-  sensorService.startSimulation(io);
-});
+      console.error(
+        `Unable to bind to port ${port} after multiple attempts. Exiting.`,
+      );
+      process.exit(1);
+    }
+
+    // For other errors rethrow
+    console.error("Server error:", err);
+    process.exit(1);
+  };
+
+  server.once("error", onError);
+
+  server.listen(port, HOST, () => {
+    // Remove any leftover error listener
+    server.removeListener("error", onError);
+
+    console.log(`\n╔═══════════════════════════════════════════════════╗`);
+    console.log(`║                                                   ║`);
+    console.log(`║          🌱 AGRANOVA API SERVER 🌱               ║`);
+    console.log(`║                                                   ║`);
+    console.log(`║  Status: RUNNING                                  ║`);
+    console.log(`║  Host: ${HOST}                                     ║`);
+    console.log(`║  Port: ${port}                                     ║`);
+    console.log(
+      `║  Environment: ${process.env.NODE_ENV || "development"}                        ║`,
+    );
+    console.log(`║  Database: Connected                              ║`);
+    console.log(`║  WebSocket: Active                                ║`);
+    console.log(`║                                                   ║`);
+    console.log(`╚═══════════════════════════════════════════════════╝\n`);
+
+    // Start sensor data simulation
+    sensorService.startSimulation(io);
+  });
+}
+
+attemptListen(PORT);
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
