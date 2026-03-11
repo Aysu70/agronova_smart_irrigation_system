@@ -16,6 +16,8 @@ const SensorData = require("../models/SensorData");
 const Alert = require("../models/Alert");
 const AdminAlert = require("../models/AdminAlert");
 const SystemLog = require("../models/SystemLog");
+const IrrigationPackage = require("../models/IrrigationPackage");
+const ShopProduct = require("../models/ShopProduct");
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/agranova";
@@ -1052,6 +1054,462 @@ async function seedDatabase() {
     console.log(`✅ Created ${createdAlerts.length} alerts`);
     console.log(`✅ Created ${createdAdminAlerts.length} admin alerts`);
     console.log(`✅ Created ${createdSystemLogs.length} system logs`);
+
+    console.log("🛒 Seeding shop data...");
+
+    // Seed shop products
+    const shopProducts = [
+      // Sensors
+      {
+        productId: "PROD-SMS-001",
+        name: "Soil Moisture Sensor Pro",
+        description: "High-precision capacitive soil moisture sensor with corrosion-resistant probes",
+        category: "sensors",
+        subcategory: "soil-moisture-sensor",
+        price: 45,
+        specifications: {
+          accuracy: "±2%",
+          range: "0-100% VWC",
+          powerConsumption: "5mA",
+          interface: "Analog/Digital",
+          probeLength: "5cm",
+          operatingTemp: "-40°C to 85°C",
+        },
+        stockQuantity: 100,
+        inStock: true,
+        rating: 4.8,
+        reviews: 127,
+        image: "/images/products/soil-moisture-sensor.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "2 years",
+          coverage: ["Manufacturing defects", "Sensor accuracy"],
+        },
+        powerRequirement: "3.3-5V DC",
+        tags: ["soil-moisture", "capacitive", "precision", "corrosion-resistant"],
+        featured: true,
+      },
+      {
+        productId: "PROD-TS-001",
+        name: "Temperature & Humidity Sensor",
+        description: "Digital temperature and humidity sensor for environmental monitoring",
+        category: "sensors",
+        subcategory: "temperature-sensor",
+        price: 35,
+        specifications: {
+          tempAccuracy: "±0.5°C",
+          humidityAccuracy: "±3%",
+          tempRange: "-40°C to 125°C",
+          humidityRange: "0-100% RH",
+          interface: "I2C",
+          responseTime: "<2s",
+        },
+        stockQuantity: 80,
+        inStock: true,
+        rating: 4.6,
+        reviews: 89,
+        image: "/images/products/temp-humidity-sensor.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "2 years",
+          coverage: ["Manufacturing defects", "Calibration"],
+        },
+        powerRequirement: "3.3-5V DC",
+        tags: ["temperature", "humidity", "environmental", "I2C"],
+        featured: true,
+      },
+      {
+        productId: "PROD-WFS-001",
+        name: "Water Flow Sensor",
+        description: "Hall effect water flow sensor for irrigation monitoring",
+        category: "sensors",
+        subcategory: "water-flow-sensor",
+        price: 25,
+        specifications: {
+          flowRange: "1-30 L/min",
+          accuracy: "±5%",
+          operatingPressure: "0.8-6 bar",
+          interface: "Pulse output",
+          pipeSize: "1/2 inch",
+        },
+        stockQuantity: 120,
+        inStock: true,
+        rating: 4.4,
+        reviews: 56,
+        image: "/images/products/water-flow-sensor.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "1 year",
+          coverage: ["Manufacturing defects"],
+        },
+        powerRequirement: "5V DC",
+        tags: ["water-flow", "hall-effect", "monitoring", "pulse"],
+      },
+
+      // Controllers
+      {
+        productId: "PROD-CTRL-001",
+        name: "Arduino Irrigation Controller",
+        description: "Programmable Arduino-based irrigation controller with 8 zones",
+        category: "controllers",
+        subcategory: "arduino-controller",
+        price: 120,
+        specifications: {
+          zones: 8,
+          powerOutput: "24V AC",
+          programming: "Arduino IDE",
+          connectivity: "Serial/WiFi (with shield)",
+          memory: "32KB Flash",
+          processor: "ATmega328P",
+        },
+        stockQuantity: 50,
+        inStock: true,
+        rating: 4.7,
+        reviews: 203,
+        image: "/images/products/arduino-controller.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "2 years",
+          coverage: ["Manufacturing defects", "Programming support"],
+        },
+        powerRequirement: "12V DC",
+        tags: ["arduino", "programmable", "8-zones", "DIY"],
+        featured: true,
+      },
+      {
+        productId: "PROD-CTRL-002",
+        name: "ESP32 WiFi Smart Controller",
+        description: "WiFi-enabled ESP32 controller with mobile app connectivity",
+        category: "controllers",
+        subcategory: "wifi-controller",
+        price: 150,
+        specifications: {
+          zones: 6,
+          connectivity: "WiFi 2.4GHz",
+          appSupport: "iOS/Android",
+          scheduling: "Time-based/AI",
+          powerOutput: "24V AC",
+          processor: "ESP32-WROOM-32",
+        },
+        stockQuantity: 40,
+        inStock: true,
+        rating: 4.9,
+        reviews: 178,
+        image: "/images/products/esp32-controller.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "2 years",
+          coverage: ["Manufacturing defects", "App support"],
+        },
+        powerRequirement: "12V DC",
+        tags: ["ESP32", "WiFi", "mobile-app", "smart"],
+        featured: true,
+      },
+
+      // Irrigation Hardware
+      {
+        productId: "PROD-IRR-001",
+        name: "Drip Irrigation Pipe Kit (50m)",
+        description: "Complete drip irrigation pipe system with emitters",
+        category: "irrigation-hardware",
+        subcategory: "drip-pipe",
+        price: 85,
+        specifications: {
+          length: "50 meters",
+          emitterSpacing: "30cm",
+          flowRate: "2 L/hour per emitter",
+          pressureRange: "0.5-2 bar",
+          material: "PE tubing",
+          connectors: "Included",
+        },
+        stockQuantity: 75,
+        inStock: true,
+        rating: 4.5,
+        reviews: 92,
+        image: "/images/products/drip-pipe-kit.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "1 year",
+          coverage: ["Manufacturing defects"],
+        },
+        quantity: {
+          unitLabel: "kit",
+          minOrder: 1,
+        },
+        tags: ["drip-irrigation", "pipe", "emitters", "PE-tubing"],
+      },
+      {
+        productId: "PROD-IRR-002",
+        name: "Solenoid Valve (24V)",
+        description: "Electric solenoid valve for automated irrigation control",
+        category: "irrigation-hardware",
+        subcategory: "solenoid-valve",
+        price: 45,
+        specifications: {
+          voltage: "24V AC",
+          pressureRange: "0.2-10 bar",
+          flowRate: "Max 50 L/min",
+          connection: "1 inch BSP",
+          material: "Brass",
+          operation: "Normally closed",
+        },
+        stockQuantity: 100,
+        inStock: true,
+        rating: 4.6,
+        reviews: 145,
+        image: "/images/products/solenoid-valve.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "2 years",
+          coverage: ["Manufacturing defects"],
+        },
+        tags: ["solenoid", "valve", "24V", "automated"],
+      },
+
+      // Pumps
+      {
+        productId: "PROD-PUMP-001",
+        name: "Solar-Powered Water Pump",
+        description: "12V solar-powered centrifugal pump for irrigation",
+        category: "pumps",
+        subcategory: "solar-pump",
+        price: 280,
+        specifications: {
+          power: "Solar 12V",
+          flowRate: "Max 800 L/hour",
+          headHeight: "Max 15m",
+          solarPanel: "Included (50W)",
+          battery: "12V 20Ah",
+          controller: "MPPT charge controller",
+        },
+        stockQuantity: 25,
+        inStock: true,
+        rating: 4.8,
+        reviews: 67,
+        image: "/images/products/solar-pump.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "3 years",
+          coverage: ["Manufacturing defects", "Solar components"],
+        },
+        powerRequirement: "Solar powered",
+        tags: ["solar", "pump", "centrifugal", "off-grid"],
+        featured: true,
+      },
+
+      // Power Modules
+      {
+        productId: "PROD-PWR-001",
+        name: "Solar Power Module (100W)",
+        description: "Complete solar power system for remote irrigation controllers",
+        category: "power-modules",
+        subcategory: "solar-module",
+        price: 180,
+        specifications: {
+          solarPanel: "100W monocrystalline",
+          battery: "12V 50Ah LiFePO4",
+          controller: "MPPT 15A",
+          output: "12V DC",
+          autonomy: "3-5 days",
+          weatherproof: "IP65",
+        },
+        stockQuantity: 30,
+        inStock: true,
+        rating: 4.7,
+        reviews: 43,
+        image: "/images/products/solar-module.jpg",
+        manufacturer: "AGRANOVA",
+        warranty: {
+          duration: "5 years",
+          coverage: ["Solar panel", "Battery", "Controller"],
+        },
+        powerRequirement: "Solar powered",
+        tags: ["solar", "power", "battery", "MPPT", "off-grid"],
+        featured: true,
+      },
+    ];
+
+    const createdShopProducts = await ShopProduct.insertMany(shopProducts);
+
+    // Seed irrigation packages
+    const irrigationPackages = [
+      {
+        packageId: "PKG-BASIC-001",
+        name: "Basic Smart Irrigation Kit",
+        description: "Perfect for small gardens and vegetable patches up to 500 m²",
+        category: "basic",
+        suitableFor: {
+          minArea: 50,
+          maxArea: 500,
+          description: "Small gardens, vegetable patches, and landscaping",
+        },
+        price: 299,
+        features: [
+          { name: "Smart Controller", description: "Basic programmable controller", quantity: 1 },
+          { name: "Soil Moisture Sensors", description: "Capacitive soil sensors", quantity: 2 },
+          { name: "Drip Irrigation Pipes", description: "20m drip pipe with emitters", quantity: 1 },
+          { name: "Solenoid Valve", description: "24V electric valve", quantity: 1 },
+          { name: "Small Pump", description: "12V water pump", quantity: 1 },
+        ],
+        components: [
+          createdShopProducts.find(p => p.productId === "PROD-CTRL-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-SMS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-IRR-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-IRR-002")._id,
+        ],
+        specifications: {
+          waterFlow: "Up to 50 L/hour",
+          coverage: "50-500 m²",
+          sensors: 2,
+          controlMethod: ["Manual", "Time-based"],
+          powerRequirement: "12V DC",
+          waterSource: ["Well", "Tank", "Municipal"],
+        },
+        stockQuantity: 50,
+        inStock: true,
+        rating: 4.6,
+        reviews: 89,
+        image: "/images/packages/basic-kit.jpg",
+        benefits: [
+          "Easy installation",
+          "Mobile app control",
+          "Water savings up to 30%",
+          "Weather-resistant design",
+        ],
+        installation: {
+          difficulty: "Easy",
+          timeRequired: "2-3 hours",
+          requiresProfessional: false,
+        },
+        warranty: {
+          duration: "2 years",
+          coverage: ["Controller", "Sensors", "Hardware"],
+        },
+        supportedCrops: ["vegetables", "grass-landscaping"],
+      },
+      {
+        packageId: "PKG-ADVANCED-001",
+        name: "Advanced Farm Kit",
+        description: "Comprehensive irrigation system for medium farms up to 2000 m²",
+        category: "advanced",
+        suitableFor: {
+          minArea: 500,
+          maxArea: 2000,
+          description: "Medium-sized farms, orchards, and commercial gardens",
+        },
+        price: 799,
+        features: [
+          { name: "IoT Controller", description: "WiFi-enabled smart controller", quantity: 1 },
+          { name: "Soil Sensors", description: "Advanced soil moisture sensors", quantity: 4 },
+          { name: "Temperature Sensor", description: "Environmental temperature monitoring", quantity: 1 },
+          { name: "Drip Irrigation System", description: "50m drip pipe system", quantity: 1 },
+          { name: "Solenoid Valves", description: "24V electric valves", quantity: 2 },
+          { name: "Flow Sensor", description: "Water flow monitoring", quantity: 1 },
+        ],
+        components: [
+          createdShopProducts.find(p => p.productId === "PROD-CTRL-002")._id,
+          createdShopProducts.find(p => p.productId === "PROD-SMS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-TS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-IRR-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-IRR-002")._id,
+          createdShopProducts.find(p => p.productId === "PROD-WFS-001")._id,
+        ],
+        specifications: {
+          waterFlow: "Up to 200 L/hour",
+          coverage: "500-2000 m²",
+          sensors: 6,
+          controlMethod: ["Manual", "Automated", "Mobile-App"],
+          powerRequirement: "12V DC",
+          waterSource: ["Well", "Tank", "Canal", "Municipal"],
+        },
+        stockQuantity: 30,
+        inStock: true,
+        rating: 4.8,
+        reviews: 156,
+        image: "/images/packages/advanced-kit.jpg",
+        benefits: [
+          "Real-time monitoring",
+          "Automated irrigation scheduling",
+          "Mobile app with analytics",
+          "Water savings up to 40%",
+          "Weather integration",
+        ],
+        installation: {
+          difficulty: "Medium",
+          timeRequired: "4-6 hours",
+          requiresProfessional: false,
+        },
+        warranty: {
+          duration: "3 years",
+          coverage: ["All components", "Technical support"],
+        },
+        supportedCrops: ["vegetables", "fruit-trees", "greenhouse", "grass-landscaping"],
+      },
+      {
+        packageId: "PKG-PROFESSIONAL-001",
+        name: "Professional Smart Farm System",
+        description: "Enterprise-grade irrigation system for large farms over 2000 m²",
+        category: "professional",
+        suitableFor: {
+          minArea: 2000,
+          maxArea: 10000,
+          description: "Large commercial farms, orchards, and agricultural operations",
+        },
+        price: 2499,
+        features: [
+          { name: "Central Controller", description: "Industrial-grade irrigation controller", quantity: 1 },
+          { name: "Soil Sensors", description: "High-precision soil sensors", quantity: 10 },
+          { name: "Weather Station", description: "Complete weather monitoring", quantity: 1 },
+          { name: "Flow Monitoring", description: "Advanced water flow system", quantity: 1 },
+          { name: "AI Scheduling", description: "Machine learning optimization", quantity: 1 },
+          { name: "Solar Power System", description: "Complete solar setup", quantity: 1 },
+          { name: "Backup Generator", description: "Diesel generator backup", quantity: 1 },
+        ],
+        components: [
+          createdShopProducts.find(p => p.productId === "PROD-CTRL-002")._id,
+          createdShopProducts.find(p => p.productId === "PROD-SMS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-TS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-WFS-001")._id,
+          createdShopProducts.find(p => p.productId === "PROD-PWR-001")._id,
+        ],
+        specifications: {
+          waterFlow: "Up to 1000 L/hour",
+          coverage: "2000-10000 m²",
+          sensors: 12,
+          controlMethod: ["Manual", "Automated", "AI-Based"],
+          powerRequirement: "Solar + Grid Backup",
+          waterSource: ["Well", "Tank", "Canal", "Municipal"],
+        },
+        stockQuantity: 10,
+        inStock: true,
+        rating: 4.9,
+        reviews: 78,
+        image: "/images/packages/professional-system.jpg",
+        benefits: [
+          "AI-powered optimization",
+          "Complete automation",
+          "Real-time analytics dashboard",
+          "Water savings up to 50%",
+          "Solar-powered operation",
+          "24/7 monitoring and support",
+        ],
+        installation: {
+          difficulty: "Hard",
+          timeRequired: "1-2 days",
+          requiresProfessional: true,
+        },
+        warranty: {
+          duration: "5 years",
+          coverage: ["All components", "On-site support", "Training"],
+        },
+        supportedCrops: ["vegetables", "fruit-trees", "greenhouse", "grass-landscaping"],
+      },
+    ];
+
+    const createdPackages = await IrrigationPackage.insertMany(irrigationPackages);
+
+    console.log(`✅ Created ${createdShopProducts.length} shop products`);
+    console.log(`✅ Created ${createdPackages.length} irrigation packages`);
 
     console.log("\n🎉 Database seeded successfully!\n");
     console.log("📊 Summary:");

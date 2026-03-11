@@ -79,6 +79,7 @@ app.use("/api/posts", require("./routes/posts")); // New posts route
 app.use("/api/discussions", require("./routes/discussions"));
 app.use("/api/devices", require("./routes/devices"));
 app.use("/api/orders", require("./routes/orders"));
+app.use("/api/shop", require("./routes/shop"));
 app.use("/api/ai", require("./routes/ai"));
 app.use("/api/reputation", require("./routes/reputation"));
 app.use("/api/groups", require("./routes/groups"));

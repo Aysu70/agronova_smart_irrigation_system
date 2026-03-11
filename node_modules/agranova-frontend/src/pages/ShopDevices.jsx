@@ -86,9 +86,11 @@ const ShopDevices = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendForm, setRecommendForm] = useState({
-    region: "",
-    farmSize: "",
-    budget: "",
+    landArea: "",
+    landUnit: "square_meters", // or "hectares"
+    cropType: "",
+    waterSource: "",
+    powerAvailability: "",
   });
   const [recommendedDevice, setRecommendedDevice] = useState(null);
   const [ordering, setOrdering] = useState(false);
