@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { DEMO_DEVICES, DEMO_ORDERS } from "../utils/demoData";
+import { DEMO_DEVICES, DEMO_ORDERS, DEMO_SHOP_DEVICES } from "../utils/demoData";
 import Navbar from "../components/common/Navbar";
 import Sidebar from "../components/common/Sidebar";
 import {
@@ -126,8 +126,8 @@ const ShopDevices = () => {
     } catch (error) {
       console.error("Error fetching devices:", error);
       // fallback to demo devices so the shop remains usable
-      setDevices(DEMO_DEVICES || []);
-      setFilteredDevices(DEMO_DEVICES || []);
+      setDevices(DEMO_SHOP_DEVICES || []);
+      setFilteredDevices(DEMO_SHOP_DEVICES || []);
       toast.error("Unable to load devices from server — showing demo devices.");
     } finally {
       setLoading(false);
@@ -137,14 +137,14 @@ const ShopDevices = () => {
   const fetchPopularDevices = async () => {
     try {
       const response = await api.get("/devices");
-      const list = response?.data?.data || DEMO_DEVICES || [];
+      const list = response?.data?.data || DEMO_SHOP_DEVICES || [];
       const sorted = (Array.isArray(list) ? list : [])
         .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
         .slice(0, 3);
       setPopularDevices(sorted);
     } catch (error) {
       console.error("Error fetching popular devices:", error);
-      setPopularDevices((DEMO_DEVICES || []).slice(0, 3));
+      setPopularDevices((DEMO_SHOP_DEVICES || []).slice(0, 3));
     }
   };
 

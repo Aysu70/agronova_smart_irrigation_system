@@ -15,37 +15,16 @@ if (-not (Test-Path "backend") -or -not (Test-Path "frontend")) {
     exit 1
 }
 
+# Start servers with minimal output
 Write-Host "✅ Starting servers..." -ForegroundColor Cyan
-Write-Host ""
 
 # Start Backend Server
-Write-Host "🔧 Starting Backend Server (Port 5001)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd backend; npm run dev" -WindowStyle Normal
-
 Start-Sleep -Seconds 2
 
 # Start Frontend Server
-Write-Host "🎨 Starting Frontend Server (Port 3000)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd frontend; npm start" -WindowStyle Normal
 
-Write-Host ""
-Write-Host "╔═══════════════════════════════════════════════════╗" -ForegroundColor Green
-Write-Host "║             ✅ SERVERS STARTING...                ║" -ForegroundColor Green
-Write-Host "╚═══════════════════════════════════════════════════╝" -ForegroundColor Green
-Write-Host ""
-Write-Host "📡 Backend API:  http://localhost:5001" -ForegroundColor Cyan
-Write-Host "🌐 Frontend App: http://localhost:3000" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "⏳ Wait 10-20 seconds for both servers to fully start..." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "🔑 Login Credentials:" -ForegroundColor Magenta
-Write-Host "   Email:    admin@agranova.com" -ForegroundColor White
-Write-Host "   Password: admin123" -ForegroundColor White
-Write-Host ""
-Write-Host "💡 Tips:" -ForegroundColor Cyan
-Write-Host "   - Backend runs in demo mode (no MongoDB needed)" -ForegroundColor Gray
-Write-Host "   - All features work, data just won't persist" -ForegroundColor Gray
-Write-Host "   - Close the PowerShell windows to stop servers" -ForegroundColor Gray
-Write-Host ""
-Write-Host "Press any key to exit this window..." -ForegroundColor Green
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+Write-Host "Servers are launching. Backend at http://localhost:5001 and frontend at http://localhost:3000 (may auto-select different port if 3000 is busy)."
+Write-Host "Close the PowerShell windows to stop servers." -ForegroundColor Yellow
+
